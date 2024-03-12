@@ -227,8 +227,8 @@ model auth_users {
   id                          String    @id @db.Uuid
   aud                         String?   @db.VarChar(255)
   role                        String?   @db.VarChar(255)
-  email                       String?   @db.VarChar(255)
-  encrypted_password          String?   @db.VarChar(255)
+  email                       String   @db.VarChar(255)
+  encrypted_password          String   @db.VarChar(255)
   email_confirmed_at          DateTime? @db.Timestamptz(6)
   invited_at                  DateTime? @db.Timestamptz(6)
   confirmation_token          String?   @db.VarChar(255)
