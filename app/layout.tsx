@@ -4,11 +4,12 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { ModalProvider } from "@/components/providers/modal-provider";
 
 const font = Open_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "RA - KYC",
+  title: "Inherent Risk Ai",
   description: "AI to predict the inherent risk of a customer",
 };
 
@@ -18,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    // <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className={cn(font.className, "bg-white dark:bg-black")}>
           <ThemeProvider
@@ -27,10 +28,11 @@ export default function RootLayout({
             enableSystem={false}
             storageKey="rakyc-theme"
           >
+            <ModalProvider />
             {children}
           </ThemeProvider>
         </body>
       </html>
-    </ClerkProvider>
+    // </ClerkProvider>
   );
 }

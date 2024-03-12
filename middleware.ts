@@ -1,12 +1,37 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { NextRequest, NextResponse } from "next/server";
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your Middleware
-export default authMiddleware({
-    publicRoutes:['/api/riskAssesmentPrototype']
-});
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (req.nextUrl.pathname.startsWith("/dashboard")) {
+    if (!session) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
-export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
-};
+  const emailLinkError = "Email link is invalid or has expired";
+  if (
+    req.nextUrl.searchParams.get("error_description") === emailLinkError &&
+    req.nextUrl.pathname !== "/signup"
+  ) {
+    return NextResponse.redirect(
+      new URL(
+        `/signup?error_description=${req.nextUrl.searchParams.get(
+          "error_description"
+        )}`,
+        req.url
+      )
+    );
+  }
+
+  if (["/login", "/signup"].includes(req.nextUrl.pathname)) {
+    if (session) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+  return res;
+}
