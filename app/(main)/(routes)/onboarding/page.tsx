@@ -1,11 +1,10 @@
-import { db } from "@/lib/db";
+import BankSetup from "@/components/bank-setup/bank-setup";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
-import BankSetup from "@/components/bank-setup/bank-setup";
 
-const DashBoard = async () => {
+const Page = async () => {
   cookies().getAll();
   const supabase = createServerComponentClient({ cookies });
 
@@ -15,18 +14,19 @@ const DashBoard = async () => {
 
   if (!user) return redirect(`/login`);
 
-  const bank = await db.bank.findFirst({
-    where: {
-      users: {
-        some: { email: user.email },
-      },
-    },
-  });
-
-  console.log(bank);
-  if (!bank) redirect(`/onboarding`);
-
-  redirect(`/dashboard/${bank.id}`);
+  return (
+    <div
+      className="bg-background
+        h-screen
+        w-screen
+        flex
+        justify-center
+        items-center
+  "
+    >
+      <BankSetup user={user} />
+    </div>
+  );
 };
 
-export default DashBoard;
+export default Page;

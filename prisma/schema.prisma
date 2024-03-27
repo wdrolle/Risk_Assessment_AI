@@ -222,13 +222,43 @@ model sso_providers {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+
+  @@schema("auth")
+}
+
 model auth_users {
   instance_id                 String?   @db.Uuid
   id                          String    @id @db.Uuid
   aud                         String?   @db.VarChar(255)
   role                        String?   @db.VarChar(255)
-  email                       String   @db.VarChar(255)
-  encrypted_password          String   @db.VarChar(255)
+  email                       String    @db.VarChar(255)
+  encrypted_password          String    @db.VarChar(255)
   email_confirmed_at          DateTime? @db.Timestamptz(6)
   invited_at                  DateTime? @db.Timestamptz(6)
   confirmation_token          String?   @db.VarChar(255)
@@ -275,15 +305,17 @@ enum Role {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model public_users {
-  id              String  @id @db.Uuid
+  id              String    @id @db.Uuid
   full_name       String?
   avatar_url      String?
-  email           String  @unique
-  role            Role    @default(DEFAULT)
+  email           String    @unique
+  role            Role      @default(DEFAULT)
   billing_address Json?
   payment_method  Json?
   bankId          String?
-  bank            Bank?   @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  upadatedAt      DateTime? @updatedAt
+  bank            Bank?     @relation(fields: [bankId], references: [id], onDelete: Cascade)
 
   @@index([bankId])
   @@map("users")
@@ -291,36 +323,65 @@ model public_users {
 }
 
 model Bank {
-  id           String         @id @default(uuid()) @map("_id")
-  name         String
-  address      String         @unique
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  codes        Code[]
-  codeAnalyses CodeAnalysis[]
-  users        public_users[]
+  id               String             @id @default(uuid()) @map("_id")
+  name             String
+  address          String             @unique
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime?          @updatedAt
+  codes            Code[]
+  codeAnalyses     CodeAnalysis[]
+  users            public_users[]
+  embeddingfolders EmbeddingsFolder[]
+  files            File[]
 
   @@schema("public")
 }
 
+model EmbeddingsFolder {
+  id           String    @id @default(uuid())
+  docStore_url String
+  index_url    String
+  bank_Id      String
+  createdAt    DateTime  @default(now())
+  upadatedAt   DateTime? @updatedAt
+  bank         Bank      @relation(fields: [bank_Id], references: [id], onDelete: Cascade)
+
+  @@index([bank_Id])
+  @@schema("public")
+}
+
+model File {
+  id            String    @id @default(uuid())
+  file_url      String
+  filename      String
+  embedded_till Int       @default(0)
+  createdAt     DateTime  @default(now())
+  upadatedAt    DateTime? @updatedAt
+  bankId        String
+  bank          Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@index([bankId])
+  @@schema("public")
+}
+
 model Code {
-  id           String   @id @default(uuid()) @map("_id")
-  code         String   @unique
+  id           String    @id @default(uuid()) @map("_id")
+  code         String    @unique
   riskCategory String
   lowRisk      String
   moderateRisk String
   highRisk     String
   bankId       String
-  createAt     DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  bank         Bank     @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  createAt     DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+  bank         Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
 
   @@index([bankId])
   @@schema("public")
 }
 
 model CodeAnalysis {
-  id            String   @id @default(uuid()) @map("_id")
+  id            String    @id @default(uuid()) @map("_id")
   code          String
   comments      String
   context       String
@@ -329,39 +390,10 @@ model CodeAnalysis {
   riskRationale String
   score         Int
   bankId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  bank          Bank     @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  bank          Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
 
   @@index([bankId])
   @@schema("public")
-}
-
-enum aal_level {
-  aal1
-  aal2
-  aal3
-
-  @@schema("auth")
-}
-
-enum code_challenge_method {
-  s256
-  plain
-
-  @@schema("auth")
-}
-
-enum factor_status {
-  unverified
-  verified
-
-  @@schema("auth")
-}
-
-enum factor_type {
-  totp
-  webauthn
-
-  @@schema("auth")
 }

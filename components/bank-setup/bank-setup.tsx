@@ -1,6 +1,6 @@
 "use client";
 import { AuthUser } from "@supabase/supabase-js";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { v4 } from "uuid";
 
@@ -25,6 +25,7 @@ import { CreateBankFormSchema } from "@/lib/types";
 import { z } from "zod";
 
 import { Bank } from "@prisma/client";
+import axios from "axios";
 
 interface BankSetupProps {
   user: AuthUser;
@@ -45,8 +46,11 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
     defaultValues: {
       address: "",
       bankName: "",
+      files: [],
     },
   });
+
+  useEffect(() => {}, []);
 
   const onSubmit: SubmitHandler<z.infer<typeof CreateBankFormSchema>> = async (
     value
@@ -61,6 +65,8 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
         address: value.address,
         updatedAt: new Date(),
       };
+
+      console.log(newBank, value.files && value.files[0]);
       const { data, error: createError } = await createBank(newBank);
       if (createError) {
         throw new Error();
@@ -71,7 +77,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
         description: `${newBank.name} has been created successfully.`,
       });
 
-      router.replace(`/dashboard/${newBank.id}`);
+      // router.replace(`/dashboard/${data.id}`);
     } catch (error) {
       console.log(error, "Error");
       toast({
@@ -90,7 +96,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
       className="w-[800px]
       h-screen
       sm:h-auto
-      shadow-2xl
+      shadow-xl
       bg-black
       text-white
   "
@@ -135,6 +141,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
                 </small>
               </div>
             </div>
+
             <div>
               <Label
                 htmlFor="logo"
@@ -159,6 +166,34 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
                 {errors?.address?.message?.toString()}
               </small>
             </div>
+
+            <div>
+              <Label
+                htmlFor="files"
+                className="text-sm
+                  text-muted-foreground
+                  text-white
+                "
+              >
+                Bank's Files
+              </Label>
+              <Input
+                type="file"
+                accept="application/pdf,application/vnd.ms-excel,.txt,.docx"
+                className="text-black  mt-2 bg-white w-full"
+                disabled={isLoading}
+                multiple
+                {...register("files", {
+                  required:
+                    "Bank Files are required for Training your ai model for better analysis",
+                })}
+                
+              />
+              <small className="text-red-600">
+                {errors?.files?.message?.toString()}
+              </small>
+            </div>
+
             <div className="self-end">
               <Button disabled={isLoading} type="submit">
                 {!isLoading ? "Create Bank" : <Loader />}
