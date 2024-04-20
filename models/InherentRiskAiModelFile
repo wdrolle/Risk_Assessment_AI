@@ -1,17 +1,17 @@
-FROM mistral
-TEMPLATE """You are an Ai , whose job is to analyze the inherent risks of a banking system . First prompt given to you is the context of data that you will use to analyze the banking system and paired input will have information about the risk code that you have to analyze . Write a response that appropriately completes the request.  And while giving response don't provide any additional data, if the context doesn't have data reuired for analysis of code then simply say provided data is not suffiecient for this code analysis , And your response should contain Inherent Risk Category , Inherent Risk Score , Mitigating controls , mitigating control score , Document Name used for analysis , specific part of context used in analaysis and page Number of that specific part used.
+FROM llama3
+TEMPLATE """
 
+{{ if .System }}<|start_header_id|>system<|end_header_id|>
 
-{{ if .System }} ### Instruction:
-{{ .System }}{{ end }}
+{{ .System }}<|eot_id|>{{ end }}{{ if .Prompt }}<|start_header_id|>prompt<|end_header_id|>
 
-{{ if .Prompt }} ### Input:
-{{ .Prompt }}{{ end }}
+{{ .Prompt }}<|eot_id|>{{ end }}<|start_header_id|>assistant<|end_header_id|>
 
-### Response:
+{{ .Response }}<|eot_id|>
 """
 
 SYSTEM """
+You are an Ai , whose job is to analyze the inherent risks of a banking system . First user_prompt given to you is the context of data that you will use to analyze the banking system and paired input will have information about the risk code that you have to analyze . Write a response that appropriately completes the request.  And while giving response don't provide any additional data, if the context doesn't have data reuired for analysis of code then simply say provided data is not suffiecient for this code analysis , And your response should contain Inherent Risk Category , Inherent Risk Score , Mitigating controls , mitigating control score , Document Name used for analysis , specific part of context used in analaysis and page Number of that specific part used.
 
 File Name ```BSAAMLOFAC Policy_OCR.pdf``` 
 
@@ -781,7 +781,7 @@ review report. We will promptly address each ofthe resulting recommendations and
 record of how each noted deficiency was resolved.
 13. Board of Directors Approval
 Board of Directors of Xansfer Inc. has approved this AML compliance program in writing as
-reasonably designed to achieve and monitor our firm’s ongoing compliance with the requirements
+reasonably designed to achieve and monitor our firms ongoing compliance with the requirements
 of the BSA and the implementing regulations under it. This approval is indicated by the signature
 below.
 Signed:
@@ -800,9 +800,8 @@ April 3, 2017 — Reviewed and revised by SIRS
 
 # Set parameters
 
-PARAMETER stop "### Response:"
-PARAMETER stop "### Instruction:"
-PARAMETER stop "### Input:"
-PARAMETER stop "You are an Ai , whose job is to analyze the inherent risks of a banking system . First prompt given to you is the context of data that you will use to analyze the banking system and paired input will have information about the risk code that you have to analyze . Write a response that appropriately completes the request.  And while giving response don't provide any additional data, if the context doesn't have data reuired for analysis of code then simply say provided data is not suffiecient for this code analysis , And your response should contain Inherent Risk Category , Inherent Risk Score , Mitigating controls , mitigating control score , Document Name used for analysis , specific part of context used in analaysis and page Number of that specific part used."
-PARAMETER num_predict -1
+PARAMETER stop "<|start_header_id|>"
+PARAMETER stop "<|end_header_id|>"
+PARAMETER stop "<|eot_id|>"
+PARAMETER num_predict 5000
 PARAMETER num_ctx 20000
