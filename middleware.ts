@@ -7,8 +7,12 @@ export async function middleware(req: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (req.nextUrl.pathname.startsWith("/dashboard")) {
+  if (
+    req.nextUrl.pathname.startsWith("/dashboard") ||
+    req.nextUrl.pathname.startsWith("/onboarding")
+  ) {
     if (!session) {
+      console.log("in dss");
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }
@@ -29,9 +33,11 @@ export async function middleware(req: NextRequest) {
   }
 
   if (["/login", "/signup"].includes(req.nextUrl.pathname)) {
+    console.log("in login");
     if (session) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
   }
+
   return res;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CustomerModal } from "@/components/models/upload-customer-model";
+import { UploadCodeModal } from "@/components/models/upload-code-model";
 
 
 
@@ -19,7 +19,7 @@ export const ModalProvider = () => {
 
   return (
     <>
-      <CustomerModal />
+      <UploadCodeModal />
       
     </>
   );

@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import React from "react";
 
-const DashBoard = async () => {
+const Page = async () => {
   cookies().getAll();
   const supabase = await createServerComponentClient({ cookies });
   const {
@@ -20,10 +21,10 @@ const DashBoard = async () => {
       },
     });
 
-    if (bank) redirect(`/dashboard/${bank?.id}`);
+    if (bank) redirect(`/risk-assessment/train-model/${bank?.id}`);
   }
 
   return <Loader />;
 };
 
-export default DashBoard;
+export default Page;

@@ -1,8 +1,9 @@
+import TrainModel from '@/components/train-model'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <TrainModel/>
   )
 }
 

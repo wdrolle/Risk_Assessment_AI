@@ -5,6 +5,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { ModalProvider } from "@/components/providers/modal-provider";
+import { SupabaseUserProvider } from "@/components/providers/supabase-user-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const font = Open_Sans({ subsets: ["latin"] });
 
@@ -20,19 +22,22 @@ export default function RootLayout({
 }) {
   return (
     // <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={cn(font.className, "bg-white dark:bg-black")}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-            storageKey="rakyc-theme"
-          >
+    <html lang="en" suppressHydrationWarning>
+      <body className={cn(font.className, "bg-white dark:bg-black")}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          storageKey="rakyc-theme"
+        >
+          <SupabaseUserProvider>
             <ModalProvider />
             {children}
-          </ThemeProvider>
-        </body>
-      </html>
+            <Toaster />
+          </SupabaseUserProvider>
+        </ThemeProvider>
+      </body>
+    </html>
     // </ClerkProvider>
   );
 }

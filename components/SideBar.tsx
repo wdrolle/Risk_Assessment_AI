@@ -1,7 +1,15 @@
 "use client";
 
 import { logo } from "@/assets/images";
-import { LayoutDashboardIcon, Menu, MoveDown, Star, Text } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  LayoutDashboardIcon,
+  Menu,
+  MoveDown,
+  Star,
+  Text,
+} from "lucide-react";
 import Image from "next/image";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,17 +18,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
+import { getBankWithId } from "@/lib/supabase/queries";
+import { bank } from "@/types";
 
-const SideBar = () => {
+const SideBar = ({ bankId }: { bankId: string | undefined }) => {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
-  const [lookup, setLookup] = useState(false);
-  const [customers, setCustomers] = useState(false);
+  const [codes, setCodes] = useState(false);
   const [riskAssessment, setRiskAssessment] = useState(false);
+  const [bankName, setBankName] = useState<string>("");
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    const fetchBank = async () => {
+      const bank = await getBankWithId(bankId!!);
+      console.log(bankId);
+      if (bank) {
+        setBankName(bank.name);
+        console.log(bank.name);
+      }
+    };
+
+    fetchBank();
+  }, [bankId]);
 
   if (!isMounted) return null;
 
@@ -31,17 +54,14 @@ const SideBar = () => {
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="dark:bg-black bg-white">
+      <SheetContent
+        side="left"
+        className="dark:bg-black bg-white overflow-auto"
+      >
         <div className="flex flex-col  w-[300px] ">
           <Link href="/">
-            <div className="w-full  my-10 ">
-              <Image
-                alt="logo"
-                src={logo}
-                width={250}
-                height={250}
-                className="w-full"
-              />
+            <div className="w-full  text-4xl font-bold flex items-center text-center justify-start ml-10 my-10 text-purple-900 ">
+              {bankName.toUpperCase()}
             </div>
           </Link>
 
@@ -57,7 +77,7 @@ const SideBar = () => {
             </div>
           </Link>
 
-          <div className="hover:bg-gray-800">
+          {/* <div className="hover:bg-gray-800">
             <div
               onClick={() => setLookup((prev) => !prev)}
               className="flex gap-x-3 items-center h-12  justify-start ml-10 z-2 "
@@ -148,63 +168,56 @@ const SideBar = () => {
                 </li>
               </ul>
             )}
-          </div>
+          </div> */}
 
           <div className="hover:bg-gray-800">
             <div
-              onClick={() => setCustomers((prev) => !prev)}
+              onClick={() => setCodes((prev) => !prev)}
               className="flex gap-x-3 items-center h-12  justify-start ml-10 z-2"
             >
               <Star />
-              <h1 className="text-xl ">Customers</h1>
-              <MoveDown />
+              <h1 className="text-xl ">Codes</h1>
+              {codes ? <ChevronUp /> : <ChevronDown />}
             </div>
-            {customers && (
+            {codes && (
               <ul className="w-full flex flex-col items-start  bg-white  dark:bg-black py-3 z-10">
-                <li
+                {/* <li
                   className={`
                   ${
-                    pathname === "/customers/manage-customers"
-                      ? "bg-gray-900"
-                      : ""
+                    pathname === "/codes/manage-codes" ? "bg-gray-900" : ""
                   } w-full text-md  hover:bg-gray-800
 
                 `}
                 >
-                  <Link href="/customers/manage-customers" className="ml-14">
-                    Manage Customers
+                  <Link href="/codes/manage-codes" className="ml-14">
+                    Manage Codes
+                  </Link>
+                </li> */}
+                <li
+                  className={`
+                  ${
+                    pathname === "/codes/add-manage-codes" ? "bg-gray-900" : ""
+                  } w-full text-md hover:bg-gray-800
+                `}
+                >
+                  <Link href="/codes/add-manage-codes" className="ml-14">
+                    Add & Manage Codes
                   </Link>
                 </li>
                 <li
                   className={`
                   ${
-                    pathname === "/customers/customer-details"
+                    pathname === "/codes/risk-analysis-of-code"
                       ? "bg-gray-900"
                       : ""
                   } w-full text-md hover:bg-gray-800
                 `}
                 >
-                  <Link href="/customers/customer-details" className="ml-14">
-                    Customer Details
+                  <Link href="/codes/risk-analysis-of-code" className="ml-14">
+                    Risk Analysis of code
                   </Link>
                 </li>
-                <li
-                  className={`
-                  ${
-                    pathname === "/customers/customer-details-list"
-                      ? "bg-gray-900"
-                      : ""
-                  } w-full text-md hover:bg-gray-800
-                `}
-                >
-                  <Link
-                    href="/customers/customer-details-list"
-                    className="ml-14"
-                  >
-                    Customer Details List
-                  </Link>
-                </li>
-                <li
+                {/* <li
                   className={`
                   ${
                     pathname === "/customers/customer-risk-factor"
@@ -219,8 +232,8 @@ const SideBar = () => {
                   >
                     Customer Risk Factor
                   </Link>
-                </li>
-                <li
+                </li> */}
+                {/* <li
                   className={`
                   ${
                     pathname === "/customers/customer-risk-factor-list"
@@ -235,7 +248,7 @@ const SideBar = () => {
                   >
                     Customer Risk Factors List
                   </Link>
-                </li>
+                </li> */}
               </ul>
             )}
           </div>
@@ -246,8 +259,8 @@ const SideBar = () => {
               className="flex gap-x-3 items-center h-12  justify-start ml-10 z-2"
             >
               <Star />
-              <h1 className="text-xl ">Risk Assessment</h1>
-              <MoveDown />
+              <h1 className="text-xl ">Risk Assessment Ai</h1>
+              {riskAssessment ? <ChevronUp /> : <ChevronDown />}
             </div>
 
             {riskAssessment && (
@@ -266,6 +279,19 @@ const SideBar = () => {
                 <li
                   className={`
                   ${
+                    pathname === "/risk-assessment/train-model"
+                      ? "bg-gray-900"
+                      : ""
+                  } w-full text-lg hover:bg-gray-800
+                `}
+                >
+                  <Link href="/risk-assessment/train-model" className="ml-14">
+                    Train Model
+                  </Link>
+                </li>
+                {/* <li
+                  className={`
+                  ${
                     pathname === "/risk-assessment/ofac-ra" ? "bg-gray-900" : ""
                   } w-full text-lg hover:bg-gray-800 
                 `}
@@ -273,8 +299,8 @@ const SideBar = () => {
                   <Link href="/risk-assessment/ofac-ra" className="ml-14">
                     OFAC-RA
                   </Link>
-                </li>
-                <li
+                </li> */}
+                {/* <li
                   className={`
                   ${
                     pathname === "/risk-assessment/bsa-risk-matrix"
@@ -289,8 +315,8 @@ const SideBar = () => {
                   >
                     BSA Risk Matrix
                   </Link>
-                </li>
-                <li
+                </li> */}
+                {/* <li
                   className={`
                   ${
                     pathname === "/risk-assessment/ofac-risk-matrix"
@@ -305,7 +331,7 @@ const SideBar = () => {
                   >
                     OFAC Risk Matrix
                   </Link>
-                </li>
+                </li> */}
                 <li
                   className={`
                   ${

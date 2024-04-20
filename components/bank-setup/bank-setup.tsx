@@ -1,7 +1,6 @@
 "use client";
-import { AuthUser } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
-import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { v4 } from "uuid";
 
 import {
@@ -17,25 +16,33 @@ import { Input } from "../ui/input";
 
 import { Button } from "../ui/button";
 import Loader from "../global/loader";
-import { createBank } from "@/lib/supabase/queries";
+import { createAndUpdateBank, uploadBankFiles } from "@/lib/supabase/queries";
 import { useToast } from "../ui/use-toast";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { CreateBankFormSchema } from "@/lib/types";
+import { CreateBankFormSchema, FileUploadFormSchema } from "@/lib/types";
 import { z } from "zod";
 
 import { Bank } from "@prisma/client";
-import axios from "axios";
+import { FileUpload } from "../fileupload";
+import { Loader2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "../ui/form";
 
 interface BankSetupProps {
-  user: AuthUser;
+  bank?: Bank | null;
 }
 
-const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
+const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const [Uploadingdocument, setUploadingdocument] = useState(false);
 
-  const supabase = createClientComponentClient();
   const {
     register,
     handleSubmit,
@@ -46,11 +53,42 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
     defaultValues: {
       address: "",
       bankName: "",
+    },
+  });
+
+  const filesForm = useForm<z.infer<typeof FileUploadFormSchema>>({
+    mode: "onChange",
+    resolver: zodResolver(FileUploadFormSchema),
+    defaultValues: {
       files: [],
     },
   });
 
-  useEffect(() => {}, []);
+  const isFilesUploadLoading = filesForm.formState.isSubmitting;
+
+  const onFilesUploadSubmit: SubmitHandler<
+    z.infer<typeof FileUploadFormSchema>
+  > = async (formData) => {
+    console.log(formData);
+
+    const filesData = formData.files.map((file) => {
+      return {
+        filename: file.fileName,
+        file_url: file.file_url,
+        bankId: bank?.id,
+      };
+    });
+
+    console.log(filesData);
+    await uploadBankFiles(filesData).then((res) => {
+      toast({
+        title: "Files Uploaded",
+        description: "Files uploaded successfully",
+      });
+
+      router.push(`/dashboard/${bank?.id}`);
+    });
+  };
 
   const onSubmit: SubmitHandler<z.infer<typeof CreateBankFormSchema>> = async (
     value
@@ -61,23 +99,26 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
       const newBank: Bank = {
         createdAt: new Date(),
         id: bankUUID,
+        status: "basic",
         name: value.bankName,
         address: value.address,
         updatedAt: new Date(),
       };
 
-      console.log(newBank, value.files && value.files[0]);
-      const { data, error: createError } = await createBank(newBank);
-      if (createError) {
-        throw new Error();
+      const { data, error: createError } = await createAndUpdateBank(newBank);
+      if (data) {
+        toast({
+          title: "Bank Created",
+          description: `${newBank.name} has been created successfully.`,
+        });
+
+        router.replace(`/dashboard/${data.id}`);
+      } else {
+        toast({
+          title: "Error Occured",
+          description: `${newBank.name} bank creation failed!! `,
+        });
       }
-
-      toast({
-        title: "Bank Created",
-        description: `${newBank.name} has been created successfully.`,
-      });
-
-      // router.replace(`/dashboard/${data.id}`);
     } catch (error) {
       console.log(error, "Error");
       toast({
@@ -96,111 +137,130 @@ const BankSetup: React.FC<BankSetupProps> = ({ user }) => {
       className="w-[800px]
       h-screen
       sm:h-auto
-      shadow-xl
+      shadow-indigo-500/50
       bg-black
       text-white
   "
     >
       <CardHeader>
-        <CardTitle>Upload Your Bank Information</CardTitle>
+        <CardTitle>
+          {" "}
+          {bank
+            ? "Upload Your Bank's files"
+            : "Upload Your Bank Information"}{" "}
+        </CardTitle>
         <CardDescription>
-          Lets upload your bank info to get you started.You can add only one
-          bank info with one email.
+          {bank
+            ? "These files will be used for training of your bank's Ai model"
+            : " Lets upload your bank info to get you started.You can add only one bank info with one email."}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-4">
-            <div
-              className="flex
-            items-center
-            gap-4"
-            >
-              <div className="w-full ">
-                <Label
-                  htmlFor="workspaceName"
-                  className="text-sm
-                  text-muted-foreground
-                  text-white
-                "
+        {bank ? (
+          <div>
+            <Form {...filesForm}>
+              <form
+                onSubmit={filesForm.handleSubmit(onFilesUploadSubmit)}
+                className="w-full text-black my-6 mx-0 space-y-4 flex flex-col "
+              >
+                {Uploadingdocument ? (
+                  <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+                    <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+                    <p className="text-xs text-white  ">Loading ...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col  w-full">
+                    <Label htmlFor="school" className="text-white">
+                      Files*
+                    </Label>
+                    <FormField
+                      disabled={isFilesUploadLoading}
+                      control={filesForm.control}
+                      name="files"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <FileUpload
+                              onChange={field.onChange}
+                              setUploadingdocument={setUploadingdocument}
+                              value={field.value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={Uploadingdocument}
+                  variant="ghost"
+                  className="border-2 border-black bg-gray-300  hover:text-black w-full"
                 >
-                  Name
+                  Upload Files
+                </Button>
+              </form>
+            </Form>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-full ">
+                  <Label
+                    htmlFor="workspaceName"
+                    className="text-sm text-muted-foreground text-white"
+                  >
+                    Name
+                  </Label>
+                  <Input
+                    id="bankName"
+                    type="text"
+                    className="text-white"
+                    placeholder="Bank Name"
+                    disabled={isLoading}
+                    {...register("bankName", {
+                      required: "Workspace name is required",
+                    })}
+                  />
+                  <small className="text-red-600">
+                    {errors?.bankName?.message?.toString()}
+                  </small>
+                </div>
+              </div>
+
+              <div>
+                <Label
+                  htmlFor="logo"
+                  className="text-sm text-muted-foreground text-white"
+                >
+                  Bank Address
                 </Label>
                 <Input
-                  id="bankName"
+                  id="address"
                   type="text"
+                  placeholder="Bank Address"
                   className="text-white"
-                  placeholder="Bank Name"
                   disabled={isLoading}
-                  {...register("bankName", {
-                    required: "Workspace name is required",
+                  {...register("address", {
+                    required: "Bank Address is required",
                   })}
                 />
                 <small className="text-red-600">
-                  {errors?.bankName?.message?.toString()}
+                  {errors?.address?.message?.toString()}
                 </small>
               </div>
-            </div>
 
-            <div>
-              <Label
-                htmlFor="logo"
-                className="text-sm
-                  text-muted-foreground
-                  text-white
-                "
-              >
-                Bank Address
-              </Label>
-              <Input
-                id="address"
-                type="text"
-                placeholder="Bank Address"
-                className="text-white"
-                disabled={isLoading}
-                {...register("address", {
-                  required: "Bank Address is required",
-                })}
-              />
-              <small className="text-red-600">
-                {errors?.address?.message?.toString()}
-              </small>
+              <div className="self-end">
+                <Button disabled={isLoading} type="submit">
+                  {!isLoading ? "Create Bank" : <Loader />}
+                </Button>
+              </div>
             </div>
-
-            <div>
-              <Label
-                htmlFor="files"
-                className="text-sm
-                  text-muted-foreground
-                  text-white
-                "
-              >
-                Bank's Files
-              </Label>
-              <Input
-                type="file"
-                accept="application/pdf,application/vnd.ms-excel,.txt,.docx"
-                className="text-black  mt-2 bg-white w-full"
-                disabled={isLoading}
-                multiple
-                {...register("files", {
-                  required:
-                    "Bank Files are required for Training your ai model for better analysis",
-                })}
-                
-              />
-              <small className="text-red-600">
-                {errors?.files?.message?.toString()}
-              </small>
-            </div>
-
-            <div className="self-end">
-              <Button disabled={isLoading} type="submit">
-                {!isLoading ? "Create Bank" : <Loader />}
-              </Button>
-            </div>
-          </div>
-        </form>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
