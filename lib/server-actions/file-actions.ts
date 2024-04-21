@@ -3,15 +3,16 @@ import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { DocxLoader } from "langchain/document_loaders/fs/docx";
 import fs from "fs";
 import { embeddAndStoreData } from "./vector-actions";
+import { create_model } from "@/models/prompt_structure";
 
 export const getDataViaFiles = async () => {
   try {
     const directoryPath = "files";
     const files = fs.readdirSync(directoryPath);
-    
 
     let loader;
     files.forEach(async (file) => {
+      let doc_data = "";
       if (file.split(".")[1] === "pdf") {
         loader = new PDFLoader(`files/${file}`);
       } else {
@@ -19,18 +20,42 @@ export const getDataViaFiles = async () => {
       }
       const docs = await loader.load();
 
-      embeddAndStoreData(docs);
+      //   embeddAndStoreData(docs);
 
-      console.log("Embedding done!");
-      // for (let index = 0; index < docs.length; index++) {
-      //   doc_data += `. Document Name - ${file}  ${
-      //     file.split(".")[1] === "pdf"
-      //       ? ", Page " + docs[index].metadata.loc.pageNumber
-      //       : ""
-      //   }  - ${docs[index].pageContent.replaceAll("\n", "")}`;
-      // }
-      // console.log(doc_data);
-      // doc_data += "\n";
+      //   console.log("Embedding done!");
+      for (let index = 0; index < docs.length; index++) {
+        doc_data += `. Document Name - ${file}  ${
+          file.split(".")[1] === "pdf"
+            ? ", Page " + docs[index].metadata.loc.pageNumber
+            : ""
+        }  - ${docs[index].pageContent.replaceAll("\n", "")}`;
+      }
+      doc_data += "\n";
+      console.log(file, doc_data.length);
+
+      // const { exec } = require("child_process");
+
+      // const res = fs.writeFileSync(
+      //   `models/${file.replaceAll(" ", "").split(".")[0]}AiModelFile`,
+      //   create_model(doc_data)
+      // );
+
+      // console.log(res);
+
+      // exec(
+      //   `ollama create ${
+      //     file.replaceAll(" ", "").split(".")[0]
+      //   }AiModelFile -f models/${
+      //     file.replaceAll(" ", "").split(".")[0]
+      //   }AiModelFile`,
+      //   (error: any, stdout: string, stderr: string) => {
+      //     if (error) {
+      //       console.error(error);
+      //       return;
+      //     }
+      //     console.log(stdout);
+      //   }
+      // );
 
       // fs.appendFile("test_data.txt", doc_data, (err) => {
       //   if (err) {
@@ -61,6 +86,6 @@ export const getDataViaFiles = async () => {
     //   }
     // });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
   }
 };
