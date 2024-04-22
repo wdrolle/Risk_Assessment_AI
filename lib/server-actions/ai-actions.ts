@@ -35,6 +35,16 @@ async function processFilesSequentially(
   return analysis;
 }
 
+const calculateResidualScore = (
+  inherentRiskScore: string,
+  mitigatingControlScore: string
+) => {
+  const inherentRisk = parseInt(inherentRiskScore);
+  const mitigatingControl = parseInt(mitigatingControlScore);
+  const residualRiskScore = inherentRisk - mitigatingControl;
+  return residualRiskScore >= 0 ? residualRiskScore.toString() : "1";
+};
+
 const riskCategory = (inherentRiskScore: string) => {
   if (inherentRiskScore === "1") {
     return "Low";
@@ -93,6 +103,10 @@ export const getAnalysis = async (bankId: string, code: code) => {
   console.log("Document Used for Analysis:", documentUsedForAnalysis);
   console.log("Reasoning:", reasoning);
 
+  const residualRiskScore =
+    inherentRiskScore !== null && mitigatingControlScore !== null
+      ? calculateResidualScore(inherentRiskScore, mitigatingControlScore)
+      : null;
   return {
     inherentRiskCategory: inherentRiskScore
       ? riskCategory(inherentRiskScore)
@@ -103,6 +117,10 @@ export const getAnalysis = async (bankId: string, code: code) => {
       : null,
     mitigatingControlScore: mitigatingControlScore,
     documentUsedForAnalysis: documentUsedForAnalysis,
+    residualRiskScore: residualRiskScore,
+    residualRiskCategory: residualRiskScore
+      ? riskCategory(residualRiskScore)
+      : null,
     reasoning: reasoning,
   };
 };

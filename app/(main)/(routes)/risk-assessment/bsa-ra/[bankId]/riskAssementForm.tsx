@@ -35,6 +35,9 @@ import { useEffect, useState } from "react";
 import { getBanksData } from "@/lib/bankData";
 import { getCodesWithId } from "@/lib/supabase/queries";
 import { getAnalysis } from "@/lib/server-actions/ai-actions";
+import { addCodeAnalysis } from "@/lib/addCodeAnalysisToDB";
+import { toast } from "@/components/ui/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   CB: z.boolean().default(false).optional(),
@@ -174,72 +177,109 @@ const RiskAssementForm = ({
     console.log("passed values:", data);
 
     for (const code of data.codes) {
-      setMessage("Assessing your data...");
+      setMessage("📂Assessing your data...");
+      setTimeout(() => {
+        setMessage("🧠Analysing...");
+      }, 40000);
+
+      setTimeout(() => {
+        setMessage("⌛ReChecking the Analysis...");
+      }, 30000);
       getAnalysis(bankId, code).then((res) => {
         console.log(res);
         setMessage(`✅${code.code} code Analysis Complete`);
-        setIsProcessing(false);
+        const assessment: assesment = {
+          code: code.code,
+          comments: res.reasoning ? res.reasoning : "",
+          documentUsedForAnalysis: res.documentUsedForAnalysis
+            ? res.documentUsedForAnalysis
+            : "",
+          inherentRiskCategory: res.inherentRiskCategory
+            ? res.inherentRiskCategory
+            : "",
+          inherentRiskScore: res.inherentRiskScore
+            ? parseInt(res.inherentRiskScore)
+            : 0,
+          mitigatingControl: res.mitigatingControl ? res.mitigatingControl : "",
+          mitigatingControlScore: res.mitigatingControlScore
+            ? parseInt(res.mitigatingControlScore)
+            : 0,
+          residualRiskCategory: res.residualRiskCategory
+            ? res.residualRiskCategory
+            : "",
+          residualRiskScore: res.residualRiskScore
+            ? parseInt(res.residualRiskScore)
+            : 0,
+          bankId: bankId,
+        };
+        addCodeAnalysis(assessment).then((res) => {
+          setMessage("Analysis Saved ☑️...");
+          toast({
+            title: "Uploaded Code Analysis",
+            description: `${code.code} Code Analysis Successfully Done.`,
+          });
+          setIsProcessing(false);
+          getBankData();
+        });
       });
     }
-    if (serverUrl) {
-      setMessage("Assessing your data...");
-      await axios
-        .post(serverUrl, data)
-        .then((response) => {
-          console.log(response.data);
+    // if (serverUrl) {
+    //   setMessage("Assessing your data...");
+    //   await axios
+    //     .post(serverUrl, data)
+    //     .then((response) => {
+    //       console.log(response.data);
 
-          if (bankId) {
-            const analysisDataArray = response.data.map(
-              (entry: {
-                code: string;
-                comments: string;
-                context: string;
-                documentName: string;
-                risk: string;
-                riskRationale: string;
-                score: number;
-              }) => ({ ...entry, bankId })
-            );
-            console.log(analysisDataArray);
+    //       if (bankId) {
+    //         const analysisDataArray = response.data.map(
+    //           (entry: {
+    //             code: string;
+    //             comments: string;
+    //             context: string;
+    //             documentName: string;
+    //             risk: string;
+    //             riskRationale: string;
+    //             score: number;
+    //           }) => ({ ...entry, bankId })
+    //         );
+    //         console.log(analysisDataArray);
 
-            setMessage("Saving data to database...");
-            analysisDataArray.forEach(async (analysisData: assesment) => {
-              const url = queryString.stringifyUrl({
-                url: `/api/addCodeAnalysisToMongoDB/`,
-              });
-              const response = await axios.post(url, analysisData);
+    //         setMessage("Saving data to database...");
+    //         analysisDataArray.forEach(async (analysisData: assesment) => {
+    //           const url = queryString.stringifyUrl({
+    //             url: `/api/addCodeAnalysisToMongoDB/`,
+    //           });
+    //           const response = await axios.post(url, analysisData);
 
-              console.log("server response ", response);
-              setMessage("Analysis is done Successfully!!");
-            });
-          }
+    //           console.log("server response ", response);
+    //           setMessage("Analysis is done Successfully!!");
+    //         });
+    //       }
 
-          setIsProcessing(false);
-        })
-        .catch((error) => {
-          console.error(error); // Handle errors
-        });
-    }
+    //       setIsProcessing(false);
+    //     })
+    //     .catch((error) => {
+    //       console.error(error); // Handle errors
+    //     });
+    // }
   };
 
-  useEffect(() => {
-    const getClients = async () => {
-      setIsProcessing(true);
-      setMessage("Loading Banks data...");
-      await getBanksData(bankId)
-        .then((response) => {
-          setBanksData(response[0]);
-          setMessage("Loaded Successfully !!");
-          console.log(response[0]);
-          setIsProcessing(false);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    };
+  const getBankData = async () => {
+    setIsProcessing(true);
+    setMessage("Loading Banks data...");
 
+    const response = await getBanksData(bankId).catch((error) => {
+      console.log(error);
+    });
+
+    setBanksData(response);
+    setMessage("Loaded Successfully !!");
+    console.log(response);
+    setIsProcessing(false);
+  };
+  useEffect(() => {
     if (bankId) {
-      getClients();
+      getBankData();
     }
   }, [bankId]);
 
@@ -271,7 +311,37 @@ const RiskAssementForm = ({
                     <TableCell className="align-top ">
                       <FormField
                         control={form.control}
-                        name={(index === 0 && "CB") || "NRA"}
+                        name={
+                          content.code as
+                            | "CB"
+                            | "NRA"
+                            | "IA"
+                            | "EM"
+                            | "MSB"
+                            | "TP"
+                            | "IG"
+                            | "HR"
+                            | "HRL"
+                            | "EB"
+                            | "SV"
+                            | "CI"
+                            | "CTR"
+                            | "LC"
+                            | "CO"
+                            | "FC"
+                            | "FBAR"
+                            | "P"
+                            | "PB"
+                            | "ND"
+                            | "FT"
+                            | "CBW"
+                            | "ACH"
+                            | "MI"
+                            | "LOC_C"
+                            | "NP"
+                            | "S"
+                            | "SAR"
+                        }
                         render={({ field }) => (
                           <FormItem className="m-2 text-sm flex items-center justify-center ">
                             <FormControl>
@@ -303,13 +373,47 @@ const RiskAssementForm = ({
                       {content.highRisk}
                     </TableCell>
 
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top"></TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.inherentRiskCategory
+                      }
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.inherentRiskScore
+                      }
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.mitigatingControl
+                      }
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.mitigatingControlScore
+                      }
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.residualRiskScore
+                      }
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {
+                        (banksData as bank)?.codeAnalyses[index]
+                          ?.documentUsedForAnalysis
+                      }
+                    </TableCell>
+                    <TableCell className="align-top w-[600px]">
+                      <Textarea rows={6} cols={6} className="w-[300px]">
+                        {(banksData as bank)?.codeAnalyses[index]?.comments}
+                      </Textarea>
+                    </TableCell>
                     <TableCell> </TableCell>
                   </TableRow>
                 ))}

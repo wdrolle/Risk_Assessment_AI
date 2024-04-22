@@ -8,10 +8,9 @@ export async function GET(req: Request) {
 
     const bankId = searchParams.get("bankId");
 
-    let banks ={}
     if (bankId) {
-      console.log("bankID : ",bankId)
-      banks = await db.bank.findMany({
+      console.log("bankID : ", bankId);
+      let banks = await db.bank.findUnique({
         where: {
           id: bankId,
         },
@@ -20,22 +19,15 @@ export async function GET(req: Request) {
           codeAnalyses: true, // Include associated code analyses
         },
       });
-    } else {
-      banks = await db.bank.findMany({
-        include: {
-          codes: false, // Include associated codes
-          codeAnalyses: false, // Include associated code analyses
-        },
-      });
+      // console.log(banks)
+      if (!banks) {
+        return new NextResponse("No banks found", { status: 200 });
+      } else {
+        return NextResponse.json(banks);
+      }
     }
 
-    
-
-    if (!banks) {
-      return new NextResponse("No banks found", { status: 200 });
-    } else {
-      return NextResponse.json(banks);
-    }
+    return new NextResponse("No banks Given", { status: 200 });
   } catch (error: any) {
     console.log(error.message);
   }

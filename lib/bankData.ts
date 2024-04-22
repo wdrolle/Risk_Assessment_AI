@@ -2,20 +2,21 @@ import { codes } from "@/types";
 import axios from "axios";
 import queryString from "query-string";
 
-export const getBanksData = async (bankId:string = "") => {
+export const getBanksData = async (bankId: string = "") => {
   const url = queryString.stringifyUrl({
     url: `/api/banks/`,
     query: {
-      bankId
-    }
+      bankId,
+    },
   });
 
-  const banks = await axios.get(url).then((response) => {
-    
-    return response.data;
-  });
+  const banks = await axios.get(url);
 
-  return banks;
+  const response = await banks.data;
+
+  console.log(response)
+  return response;
+
 };
 
 export const UploadBanksData = async ({
@@ -34,7 +35,6 @@ export const UploadBanksData = async ({
   const response = await axios
     .post(url, { name: name, codes: codes, address: address })
     .then((response) => {
-      
       return response;
     });
 

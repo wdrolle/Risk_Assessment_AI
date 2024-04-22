@@ -1,11 +1,13 @@
 export type assesment = {
   code: string;
   comments: string;
-  context: string;
-  documentName: string;
-  risk: string;
-  riskRationale: string;
-  score: number;
+  documentUsedForAnalysis: string;
+  inherentRiskCategory: string;
+  inherentRiskScore: number;
+  mitigatingControl: string;
+  mitigatingControlScore: number;
+  residualRiskCategory: string;
+  residualRiskScore: number;
   bankId: string;
 };
 

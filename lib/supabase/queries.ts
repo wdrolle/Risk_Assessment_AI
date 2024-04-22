@@ -196,10 +196,10 @@ export const getFilesByBankId = async (bankId: string) => {
         bankId: bankId,
       },
     });
-    
+
     return files;
   } catch (error) {
-    return null;
     console.log("[ERROR_GET_FILES_BY_BANK_ID]", error);
+    return null;
   }
 };
