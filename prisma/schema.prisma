@@ -367,7 +367,7 @@ model File {
 
 model Code {
   id           String    @id @default(uuid()) @map("_id")
-  code         String    
+  code         String
   riskCategory String
   lowRisk      String
   moderateRisk String
@@ -382,18 +382,20 @@ model Code {
 }
 
 model CodeAnalysis {
-  id            String    @id @default(uuid()) @map("_id")
-  code          String
-  comments      String
-  context       String
-  documentName  String
-  risk          String
-  riskRationale String
-  score         Int
-  bankId        String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime? @updatedAt
-  bank          Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  id                      String    @id @default(uuid()) @map("_id")
+  code                    String
+  comments                String
+  documentUsedForAnalysis String
+  inherentRiskCategory    String
+  inherentRiskScore       Int
+  mitigatingControl       String
+  mitigatingControlScore  Int
+  residualRiskCategory    String
+  residualRiskScore       Int
+  bankId                  String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime? @updatedAt
+  bank                    Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
 
   @@index([bankId])
   @@schema("public")

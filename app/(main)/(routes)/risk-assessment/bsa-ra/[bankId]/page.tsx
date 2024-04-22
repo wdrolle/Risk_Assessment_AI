@@ -56,15 +56,15 @@ const page = ({
     getClients();
   }, [banks]);
 
-  const handleCustomer = (value: string) => {
-    setSelectedBankID(value);
-  };
+  // const handleCustomer = (value: string) => {
+  //   setSelectedBankID(value);
+  // };
 
   if (!IsMounted) {
     return (
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center">
-        <Loader2 className="h-7 w-7 text-zinc-500 animate-spin mr-2" />
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading ...</p>
+        <Loader2 className="h-7 w-7 text-white animate-spin mr-2" />
+        <p className="text-xs text-white dark:text-zinc-400">Loading ...</p>
       </div>
     );
   }
@@ -75,7 +75,7 @@ const page = ({
         <h1>BSA-RA</h1>
       </div>
 
-      <div className="flex w-full  p-4">
+      {/* <div className="flex w-full  p-4">
         <Select onValueChange={handleCustomer}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select Client" />
@@ -92,11 +92,11 @@ const page = ({
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
+      </div> */}
 
       <RiskAssementForm
         data={{ codes: codes }}
-        selectedBankID={selectedBankID}
+        selectedBankID={params.bankId}
       />
     </div>
   );

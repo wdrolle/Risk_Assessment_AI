@@ -107,9 +107,9 @@ const Page = ({
   return (
     <div className="w-full flex flex-col items-center justify-center">
       {isTraining && (
-        <div className="z-10 fixed top-1/2 left-1/2 transform h-full w-full -translate-x-1/2 bg-opacity-75 bg-black text-2xl font-semibold   -translate-y-1/2 flex items-center justify-center">
-          <Loader2 className="h-[100px] w-[100px] text-zinc-500 animate-spin mr-2" />
-          <p className="text-[100px] text-zinc-500 dark:text-zinc-400">
+        <div className="z-10 fixed top-1/2 left-1/2 transform h-full w-full -translate-x-1/2 bg-opacity-80 bg-black text-2xl font-semibold   -translate-y-1/2 flex items-center justify-center">
+          <Loader2 className="h-[50px] w-[50px] text-white animate-spin mr-2" />
+          <p className="text-[50px] text-white dark:text-zinc-400">
             Training ...
           </p>
         </div>
@@ -184,7 +184,7 @@ const Page = ({
         >
           {traingingCompleted ? (
             <>
-              <CheckCircle />{" "} Training Completed{" "}
+              <CheckCircle /> Training Completed{" "}
             </>
           ) : (
             "Start Training"

@@ -20,7 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { assesment, bank } from "@/types";
+import { assesment, bank, code } from "@/types";
 import axios from "axios";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import queryString from "query-string";
@@ -33,13 +33,70 @@ import {
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { getBanksData } from "@/lib/bankData";
+import { getCodesWithId } from "@/lib/supabase/queries";
+import { getAnalysis } from "@/lib/server-actions/ai-actions";
 
 const formSchema = z.object({
   CB: z.boolean().default(false).optional(),
   NRA: z.boolean().default(false).optional(),
+  IA: z.boolean().default(false).optional(),
+  EM: z.boolean().default(false).optional(),
+  MSB: z.boolean().default(false).optional(),
+  TP: z.boolean().default(false).optional(),
+  IG: z.boolean().default(false).optional(),
+  HR: z.boolean().default(false).optional(),
+  HRL: z.boolean().default(false).optional(),
+  EB: z.boolean().default(false).optional(),
+  SV: z.boolean().default(false).optional(),
+  CI: z.boolean().default(false).optional(),
+  CTR: z.boolean().default(false).optional(),
+  LC: z.boolean().default(false).optional(),
+  CO: z.boolean().default(false).optional(),
+  FC: z.boolean().default(false).optional(),
+  FBAR: z.boolean().default(false).optional(),
+  P: z.boolean().default(false).optional(),
+  PB: z.boolean().default(false).optional(),
+  ND: z.boolean().default(false).optional(),
+  FT: z.boolean().default(false).optional(),
+  CBW: z.boolean().default(false).optional(),
+  ACH: z.boolean().default(false).optional(),
+  MI: z.boolean().default(false).optional(),
+  LOC_C: z.boolean().default(false).optional(),
+  NP: z.boolean().default(false).optional(),
+  S: z.boolean().default(false).optional(),
+  SAR: z.boolean().default(false).optional(),
 });
 
-const code_names = ["CB", "NRA"];
+const code_names = [
+  "CB",
+  "NRA",
+  "IA",
+  "EM",
+  "MSB",
+  "TP",
+  "IG",
+  "HR",
+  "HRL",
+  "EB",
+  "SV",
+  "CI",
+  "CTR",
+  "LC",
+  "CO",
+  "FC",
+  "FBAR",
+  "P",
+  "PB",
+  "ND",
+  "FT",
+  "CBW",
+  "ACH",
+  "MI",
+  "LOC_C",
+  "NP",
+  "S",
+  "SAR",
+];
 
 const RiskAssementForm = ({
   data,
@@ -58,63 +115,74 @@ const RiskAssementForm = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("");
-  const [banksData, setBanksData] = useState<bank>({
-    id: "",
-    name: "",
-    address: "",
-    codes: [
-      {
-        code: "",
-        riskCategory: "",
-        lowRisk: "",
-        moderateRisk: "",
-        highRisk: "",
-      },
-    ],
-    codeAnalyses: [
-      {
-        code: "",
-        comments: "",
-        context: "",
-        documentName: "",
-        risk: "",
-        riskRationale: "",
-        score: 0,
-        bankId: "",
-      },
-    ],
-  });
+
+  const [banksData, setBanksData] = useState<bank | {}>({});
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       CB: false,
       NRA: false,
+      IA: false,
+      EM: false,
+      MSB: false,
+      TP: false,
+      IG: false,
+      HR: false,
+      HRL: false,
+      EB: false,
+      SV: false,
+      CI: false,
+      CTR: false,
+      LC: false,
+      CO: false,
+      FC: false,
+      FBAR: false,
+      P: false,
+      PB: false,
+      ND: false,
+      FT: false,
+      CBW: false,
+      ACH: false,
+      MI: false,
+      LOC_C: false,
+      NP: false,
+      S: false,
+      SAR: false,
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-
-    setIsProcessing(true)
-    setMessage("Parsing Data...")
+    setIsProcessing(true);
+    setMessage("Parsing Data...");
     const serverUrl = process.env.NEXT_PUBLIC_SERVER_PROCESSING_URL;
 
     data = {
       codes: [],
     };
 
-    if (values.CB) {
-      data["codes"].push(cbCode);
-    }
-
-    if (values.NRA) {
-      data["codes"].push(nraCode);
+    for (const [key, value] of Object.entries(values)) {
+      if (value) {
+        const filteredCodes = (banksData as bank)?.codes.filter(
+          (code) => key === code.code
+        );
+        data["codes"].push(filteredCodes[0]);
+      }
     }
 
     console.log("passed values:", data);
+
+    for (const code of data.codes) {
+      setMessage("Assessing your data...");
+      getAnalysis(bankId, code).then((res) => {
+        console.log(res);
+        setMessage(`✅${code.code} code Analysis Complete`);
+        setIsProcessing(false);
+      });
+    }
     if (serverUrl) {
-      setMessage("Assessing your data...")
+      setMessage("Assessing your data...");
       await axios
         .post(serverUrl, data)
         .then((response) => {
@@ -134,7 +202,7 @@ const RiskAssementForm = ({
             );
             console.log(analysisDataArray);
 
-            setMessage("Saving data to database...")
+            setMessage("Saving data to database...");
             analysisDataArray.forEach(async (analysisData: assesment) => {
               const url = queryString.stringifyUrl({
                 url: `/api/addCodeAnalysisToMongoDB/`,
@@ -142,11 +210,11 @@ const RiskAssementForm = ({
               const response = await axios.post(url, analysisData);
 
               console.log("server response ", response);
-              setMessage("Analysis is done Successfully!!")
+              setMessage("Analysis is done Successfully!!");
             });
           }
 
-          setIsProcessing(false)
+          setIsProcessing(false);
         })
         .catch((error) => {
           console.error(error); // Handle errors
@@ -178,9 +246,9 @@ const RiskAssementForm = ({
   return (
     <div>
       {(isLoading || isProcessing) && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center">
-          <Loader2 className="h-7 w-7 text-zinc-500 animate-spin mr-2" />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{message}</p>
+        <div className="z-10 fixed top-1/2 left-1/2 transform h-full w-full -translate-x-1/2 bg-opacity-80 bg-black text-2xl font-semibold   -translate-y-1/2 flex items-center justify-center">
+          <Loader2 className="h-[50px] w-[50px] text-white animate-spin mr-2" />
+          <p className="text-[50px] text-white dark:text-zinc-400">{message}</p>
         </div>
       )}
       <Form {...form}>
@@ -194,11 +262,11 @@ const RiskAssementForm = ({
                     <TableHead key={index}>{header}</TableHead>
                   ))}
 
-                  <TableHead className="text-center">Risk SubClasses</TableHead>
+                  {/* <TableHead className="text-center">Risk SubClasses</TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {table_content.map((content, index) => (
+                {(banksData as bank)?.codes?.map((content, index) => (
                   <TableRow key={index} className="border-b-2 ">
                     <TableCell className="align-top ">
                       <FormField
@@ -223,36 +291,44 @@ const RiskAssementForm = ({
                       />
                     </TableCell>
                     <TableCell className="align-top">
-                      {/* <Checkbox
-                        id={`${content.code}_${content.risk_category}`}
-                      />{" "} */}
-                      {content.risk_category}
+                      {content.riskCategory}
                     </TableCell>
                     <TableCell className="align-top">
-                      {/* <Checkbox id={`${content.code}_${content.low_risk}`} />{" "} */}
-                      {content.low_risk}
+                      {content.lowRisk}
                     </TableCell>
                     <TableCell className="align-top">
-                      {/* <Checkbox
-                        id={`${content.code}_${content.moderate_risk}`}
-                      />{" "} */}
-                      {content.moderate_risk}
+                      {content.moderateRisk}
                     </TableCell>
                     <TableCell className="align-top">
-                      {/* <Checkbox id={`${content.code}_${content.high_risk}`} />{" "} */}
-                      {content.high_risk}
+                      {content.highRisk}
                     </TableCell>
 
                     <TableCell className="align-top"></TableCell>
                     <TableCell className="align-top"></TableCell>
-                    <TableCell className="align-top">Example data</TableCell>
-                    <TableCell className="align-top">Example data</TableCell>
-                    <TableCell className="align-top">Example data</TableCell>
-                    <TableCell className="align-top">Example data</TableCell>
-                    <TableCell className="align-top">Example data</TableCell>
-                    <TableCell>
-                      {" "}
-                      <Table className="h-full overflow-scroll">
+                    <TableCell className="align-top"></TableCell>
+                    <TableCell className="align-top"></TableCell>
+                    <TableCell className="align-top"></TableCell>
+                    <TableCell className="align-top"></TableCell>
+                    <TableCell className="align-top"></TableCell>
+                    <TableCell> </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex flex-col items-center">
+            <Button className="w-[100px] bg-blue-700 text-white hover:bg-blue-900 hover:text-white">
+              Submit
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+};
+export default RiskAssementForm;
+
+/* <Table className="h-full overflow-scroll">
                         <TableHeader>
                           <TableRow className="bg-black text-white">
                             <TableHead>#</TableHead>
@@ -285,34 +361,17 @@ const RiskAssementForm = ({
                                   {sub_content.weak}
                                 </TableCell>
                                 <TableCell className="align-top">
-                                  {/* {sub_content.score} */}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {/* {sub_content.comments} */}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {/* {sub_content.documents} */}
-                                </TableCell>
-                              </TableRow>
-                            )
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button className="w-[100px] bg-blue-700 text-white hover:bg-blue-900 hover:text-white">
-              Submit
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
-  );
-};
-
-export default RiskAssementForm;
+//                                   {/* {sub_content.score} */
+// }
+//           </TableCell>
+//           <TableCell className="align-top">
+//             {/* {sub_content.comments} */}
+//           </TableCell>
+//           <TableCell className="align-top">
+//             {/* {sub_content.documents} */}
+//           </TableCell>
+//         </TableRow>
+//       )
+//     )}
+//   </TableBody>
+// </Table> */}
