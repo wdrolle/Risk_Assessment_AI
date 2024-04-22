@@ -199,7 +199,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
                   variant="ghost"
                   className="border-2 border-black bg-gray-300  hover:text-black w-full"
                 >
-                  Upload Files
+                  {Uploadingdocument ?<Loader2 className="h-7 w-7 text-white  animate-spin my-4" /> : "Upload Files"}
                 </Button>
               </form>
             </Form>

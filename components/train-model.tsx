@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "./ui/button";
 import { Mail } from "lucide-react";
+import Link from "next/link";
 
 const TrainModel = () => {
   return (
@@ -30,9 +31,11 @@ const TrainModel = () => {
             <div className="flex">Storing Trained Baises to database</div>
           </div>
         </div>
-        <Button type="button" className="my-10">
-          Start Training
-        </Button>
+        <Link href={"/risk-assessment/train-model"}>
+          <Button type="button" className="my-10">
+            Start Training
+          </Button>
+        </Link>
         <span className="mb-5 mx-5 text-center md:text-start">
           *This Process will take some time , some times because of heavy it can
           take hours also{" "}

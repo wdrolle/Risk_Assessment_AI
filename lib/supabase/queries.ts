@@ -188,3 +188,18 @@ export const getCodesWithId = async (bankId: string) => {
     console.log("[ERROR_GET_CODES_WITH_ID]", error);
   }
 };
+
+export const getFilesByBankId = async (bankId: string) => {
+  try {
+    const files = await db.file.findMany({
+      where: {
+        bankId: bankId,
+      },
+    });
+    
+    return files;
+  } catch (error) {
+    return null;
+    console.log("[ERROR_GET_FILES_BY_BANK_ID]", error);
+  }
+};

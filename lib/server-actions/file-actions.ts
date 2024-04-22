@@ -1,22 +1,28 @@
 "use server";
+
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { DocxLoader } from "langchain/document_loaders/fs/docx";
 import fs from "fs";
 import { embeddAndStoreData } from "./vector-actions";
 import { create_model } from "@/models/prompt_structure";
+import { WebPDFLoader } from "langchain/document_loaders/web/pdf";
+import { getFilesByBankId } from "../supabase/queries";
 
-export const getDataViaFiles = async () => {
+
+
+export const getDataViaFiles = async (bankId: string) => {
   try {
-    const directoryPath = "files";
-    const files = fs.readdirSync(directoryPath);
+    const web_files = await getFilesByBankId(bankId);
 
     let loader;
-    files.forEach(async (file) => {
+    web_files?.forEach(async (file) => {
       let doc_data = "";
-      if (file.split(".")[1] === "pdf") {
-        loader = new PDFLoader(`files/${file}`);
+      const data = await fetch(file.file_url);
+      const blob = await data.blob();
+      if (file.filename.split(".")[1] === "pdf") {
+        loader = new PDFLoader(blob);
       } else {
-        loader = new DocxLoader(`files/${file}`);
+        loader = new DocxLoader(blob);
       }
       const docs = await loader.load();
 
@@ -25,7 +31,7 @@ export const getDataViaFiles = async () => {
       //   console.log("Embedding done!");
       for (let index = 0; index < docs.length; index++) {
         doc_data += `. Document Name - ${file}  ${
-          file.split(".")[1] === "pdf"
+          file.filename.split(".")[1] === "pdf"
             ? ", Page " + docs[index].metadata.loc.pageNumber
             : ""
         }  - ${docs[index].pageContent.replaceAll("\n", "")}`;
@@ -33,14 +39,83 @@ export const getDataViaFiles = async () => {
       doc_data += "\n";
       console.log(file, doc_data.length);
 
-      // const { exec } = require("child_process");
+      const { exec } = require("child_process");
+      if (doc_data.length > 50000) {
+        let times = doc_data.length / 50000;
 
-      // const res = fs.writeFileSync(
-      //   `models/${file.replaceAll(" ", "").split(".")[0]}AiModelFile`,
-      //   create_model(doc_data)
-      // );
+        for (let index = 0; index < times; index++) {
+          if (index + 1 < times) {
+            fs.writeFileSync(
+              `models/${bankId}_${file.filename
+                .replaceAll(" ", "")
+                .split(".")[0]
+                .replaceAll("(", "")
+                .replaceAll(")", "")}AiModelFile${index + 1}`,
+              create_model(doc_data.slice(index * 50000, (index + 1) * 50000))
+            );
+          } else {
+            fs.writeFileSync(
+              `models/${bankId}_${file.filename
+                .replaceAll(" ", "")
+                .split(".")[0]
+                .replaceAll("(", "")
+                .replaceAll(")", "")}AiModelFile${index + 1}`,
+              create_model(doc_data.slice(index * 50000))
+            );
+          }
 
-      // console.log(res);
+          exec(
+            `ollama create ${file.filename
+              .replaceAll(" ", "")
+              .split(".")[0]
+              .replaceAll("(", "")
+              .replaceAll(")", "")}AiModelFile${
+              index + 1
+            } -f models/${bankId}_${file.filename
+              .replaceAll(" ", "")
+              .split(".")[0]
+              .replaceAll("(", "")
+              .replaceAll(")", "")}AiModelFile${index + 1}`,
+            (error: any, stdout: string, stderr: string) => {
+              if (error) {
+                console.error(error);
+                return;
+              }
+              console.log(stdout);
+            }
+          );
+        }
+      } else {
+        let res = fs.writeFileSync(
+          `models/${bankId}_${file.filename
+            .replaceAll(" ", "")
+            .split(".")[0]
+            .replaceAll("(", "")
+            .replaceAll(")", "")}AiModelFile`,
+          create_model(doc_data)
+        );
+
+        console.log(res);
+
+        exec(
+          `ollama create ${file.filename
+            .replaceAll(" ", "")
+            .split(".")[0]
+            .replaceAll("(", "")
+            .replaceAll(")", "")}AiModelFile -f models/${bankId}_${file.filename
+            .replaceAll(" ", "")
+            .split(".")[0]
+            .replaceAll("(", "")
+            .replaceAll(")", "")}AiModelFile`,
+          (error: any, stdout: string, stderr: string) => {
+            if (error) {
+              console.error(error);
+              return;
+            }
+            console.log(stdout);
+          }
+        );
+      }
 
       // exec(
       //   `ollama create ${
