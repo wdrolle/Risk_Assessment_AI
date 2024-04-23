@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { assesment, bank, code } from "@/types";
 import axios from "axios";
-import { ArrowUpDown, Loader2 } from "lucide-react";
+import { ArrowUpDown, Loader2, Router } from "lucide-react";
 import queryString from "query-string";
 import {
   cbCode,
@@ -38,6 +38,7 @@ import { getAnalysis } from "@/lib/server-actions/ai-actions";
 import { addCodeAnalysis } from "@/lib/addCodeAnalysisToDB";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   CB: z.boolean().default(false).optional(),
@@ -118,6 +119,7 @@ const RiskAssementForm = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter()
 
   const [banksData, setBanksData] = useState<bank | {}>({});
   const form = useForm({
@@ -180,11 +182,11 @@ const RiskAssementForm = ({
       setMessage("📂Assessing your data...");
       setTimeout(() => {
         setMessage("🧠Analysing...");
-      }, 40000);
+      }, 30000);
 
       setTimeout(() => {
         setMessage("⌛ReChecking the Analysis...");
-      }, 30000);
+      }, 70000);
       getAnalysis(bankId, code).then((res) => {
         console.log(res);
         setMessage(`✅${code.code} code Analysis Complete`);
@@ -220,6 +222,8 @@ const RiskAssementForm = ({
           });
           setIsProcessing(false);
           getBankData();
+          router.push("/risk-assessment/bsa-ra")
+          
         });
       });
     }

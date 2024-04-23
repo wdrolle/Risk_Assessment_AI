@@ -58,7 +58,7 @@ const page = ({
       prompt: create_print_out_prompt(codeAnalysisData, bankName),
       bankName: bankName,
     });
-    setMessage("✅Printout Genearted...");
+    setMessage("✅Printout Generated...");
 
     const data = await res.data;
     if (data) {
