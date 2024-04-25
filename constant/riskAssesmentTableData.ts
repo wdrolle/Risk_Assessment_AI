@@ -71,8 +71,8 @@ export const table_header = [
   "Migrating Control",
   "Migrating Control Score",
   "Residual Risk",
-  "Category #",
-  "Row in FFIEC Appendix M",
+  "Document Used for Analysis",
+  "Comments",
 ];
 
 export const cbCode = {

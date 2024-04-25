@@ -418,7 +418,7 @@ const RiskAssementForm = ({
                         {(banksData as bank)?.codeAnalyses[index]?.comments}
                       </Textarea>
                     </TableCell>
-                    <TableCell> </TableCell>
+                    
                   </TableRow>
                 ))}
               </TableBody>
