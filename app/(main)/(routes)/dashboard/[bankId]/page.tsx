@@ -17,15 +17,15 @@ const Page = ({
     const fetchBankStatus = async () => {
       const bank = await getBankWithId(params.bankId);
       if (bank?.status !== "files_uploaded") return redirect(`/onboarding`);
-      await getAnalysis(params.bankId, {
-        code: "NRA",
-        riskCategory: "NRA Customers",
-        lowRisk: "The institution does not have any NRA accounts.",
-        moderateRisk:
-          "Moderate level of NRA accounts from lower- risk geographies.",
-        highRisk:
-          "Significant number of NRA accounts from higher-risk geographies.",
-      });
+      // await getAnalysis(params.bankId, {
+      //   code: "NRA",
+      //   riskCategory: "NRA Customers",
+      //   lowRisk: "The institution does not have any NRA accounts.",
+      //   moderateRisk:
+      //     "Moderate level of NRA accounts from lower- risk geographies.",
+      //   highRisk:
+      //     "Significant number of NRA accounts from higher-risk geographies.",
+      // });
     };
     fetchBankStatus();
   }, []);
