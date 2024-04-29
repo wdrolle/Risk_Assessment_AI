@@ -56,6 +56,9 @@ body,
   }
 }
 
+nextjs-portal {
+  display: none;
+}
 
 @layer base {
   * {
