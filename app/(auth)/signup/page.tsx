@@ -72,10 +72,10 @@ const Signup = () => {
 
   const isLoading = form.formState.isSubmitting;
   const onSubmit = async ({ email, password }: z.infer<typeof FormSchema>) => {
-    const { error } = await actionSignUpUser({ email, password });
-    if (error) {
-      setSubmitError(error.message);
-      router.push(`/signup?error_description=${error.message}`);
+    const res = await actionSignUpUser({ email, password });
+    if (res.error) {
+      setSubmitError(res.error);
+      router.push(`/signup?error_description=${res.error}`);
       form.reset();
       return;
     }

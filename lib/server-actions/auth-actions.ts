@@ -10,12 +10,17 @@ export async function actionLoginUser({
   password,
 }: z.infer<typeof FormSchema>) {
   cookies().getAll();
+  console.log("enter");
   const supabase = createRouteHandlerClient({ cookies });
+  console.log("entered");
   const response = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-  return response;
+  console.log("exit");
+  const data = await response.data;
+  console.log("response:", data);
+  return data;
 }
 
 export async function actionSignUpUser({
@@ -28,7 +33,7 @@ export async function actionSignUpUser({
     .select("*")
     .eq("email", email);
 
-  if (data?.length) return { error: { message: "User already exists", data } };
+  if (data?.length) return { error: "User already exists" };
   const response = await supabase.auth.signUp({
     email,
     password,
@@ -36,10 +41,12 @@ export async function actionSignUpUser({
       emailRedirectTo: `http://localhost:3000/api/auth/callback`,
     },
   });
-  if (!response.error) return response;
-  else return {
-    error: response.error
-  }
+  console.log(response);
+  if (!response.error) return { message: "success" };
+  else
+    return {
+      error: "Confirmation Email send limit excedded",
+    };
 }
 
 export async function signOut() {

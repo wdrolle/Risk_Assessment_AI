@@ -38,13 +38,12 @@ const LoginPage = () => {
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (
     formData
   ) => {
-
-    console.log("Enter")
-    const { error } = await actionLoginUser(formData);
-    console.log("out")
-    if (error) {
+    console.log("Enter");
+    const { session } = await actionLoginUser(formData);
+    console.log("out");
+    if (!session) {
       form.reset();
-      setSubmitError(error.message);
+      setSubmitError("Error Occured while Logging!!");
     } else {
       router.replace("/dashboard");
     }
