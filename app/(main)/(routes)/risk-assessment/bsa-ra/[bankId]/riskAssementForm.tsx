@@ -119,7 +119,7 @@ const RiskAssementForm = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("");
-  const router = useRouter()
+  const router = useRouter();
 
   const [banksData, setBanksData] = useState<bank | {}>({});
   const form = useForm({
@@ -222,8 +222,7 @@ const RiskAssementForm = ({
           });
           setIsProcessing(false);
           getBankData();
-          router.push("/risk-assessment/bsa-ra")
-          
+          router.refresh();
         });
       });
     }
@@ -414,11 +413,15 @@ const RiskAssementForm = ({
                       }
                     </TableCell>
                     <TableCell className="align-top w-[600px]">
-                      <Textarea rows={6} cols={6} className="w-[300px]">
-                        {(banksData as bank)?.codeAnalyses[index]?.comments}
-                      </Textarea>
+                      <Textarea
+                        rows={6}
+                        cols={6}
+                        className="w-[300px]"
+                        value={
+                          (banksData as bank)?.codeAnalyses[index]?.comments
+                        }
+                      />
                     </TableCell>
-                    
                   </TableRow>
                 ))}
               </TableBody>
