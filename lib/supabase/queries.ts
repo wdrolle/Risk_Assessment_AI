@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { v4 } from "uuid";
 import { code, codes } from "@/types";
+import fs from "fs";
+import { exec } from "child_process";
 
 export const getBank = async (email: string) => {
   try {
@@ -200,6 +202,41 @@ export const getFilesByBankId = async (bankId: string) => {
     return files;
   } catch (error) {
     console.log("[ERROR_GET_FILES_BY_BANK_ID]", error);
+    return null;
+  }
+};
+
+export const deleteFile = async ({
+  fileId,
+  model_name,
+  model_fileName,
+}: {
+  fileId: string;
+  model_name: string;
+  model_fileName: string;
+}) => {
+  try {
+    exec(
+      `ollama rm ${model_name}`,
+      (error: any, stdout: string, stderr: string) => {
+        if (error) {
+          console.error(error);
+          return;
+        }
+        console.log(stdout);
+      }
+    );
+    fs.unlink(model_fileName, function (err) {
+      if (err) {
+        console.log("Error occured", err);
+      } else {
+        console.log("File deleted successfully");
+      }
+    });
+    const files = await db.file.delete({ where: { id: fileId } });
+    return files;
+  } catch (error) {
+    console.log("[ERROR_DELETE_FILE]", error);
     return null;
   }
 };

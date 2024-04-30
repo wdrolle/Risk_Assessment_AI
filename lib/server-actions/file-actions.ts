@@ -3,9 +3,7 @@
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { DocxLoader } from "langchain/document_loaders/fs/docx";
 import fs from "fs";
-import { embeddAndStoreData } from "./vector-actions";
 import { create_model } from "@/models/prompt_structure";
-import { WebPDFLoader } from "langchain/document_loaders/web/pdf";
 import { getFilesByBankId } from "../supabase/queries";
 
 

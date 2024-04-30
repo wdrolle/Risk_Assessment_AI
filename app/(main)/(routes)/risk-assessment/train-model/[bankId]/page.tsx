@@ -1,6 +1,5 @@
 "use client";
 import { FileUpload } from "@/components/fileupload";
-import TrainModel from "@/components/train-model";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,10 +18,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { getDataViaFiles } from "@/lib/server-actions/file-actions";
-import { getFilesByBankId, uploadBankFiles } from "@/lib/supabase/queries";
+import {
+  deleteFile,
+  getFilesByBankId,
+  uploadBankFiles,
+} from "@/lib/supabase/queries";
 import { FileUploadFormSchema } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -39,7 +42,7 @@ const Page = ({
   const { toast } = useToast();
   const [Uploadingdocument, setUploadingdocument] = useState(false);
   const [files, setFiles] = useState<
-    { filename: string; UploadedAt: string }[] | []
+    { id: string; filename: string; UploadedAt: string }[] | []
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
@@ -52,6 +55,7 @@ const Page = ({
       if (files_data) {
         const data = files_data.map((file) => {
           return {
+            id: file.id,
             filename: file.filename,
             UploadedAt: file.createdAt.toDateString(),
           };
@@ -64,6 +68,47 @@ const Page = ({
 
     getFiles();
   }, [Uploadingdocument]);
+
+  const documentDelete = async ({
+    file,
+    index,
+  }: {
+    file: {
+      id: string;
+      filename: string;
+      UploadedAt: string;
+    };
+    index: number;
+  }) => {
+    setIsLoading(true);
+    
+
+    const model_name = `${file.filename
+      .replaceAll(" ", "")
+      .split(".")[0]
+      .replaceAll("(", "")
+      .replaceAll(")", "")}AiModelFile${index + 1}`;
+
+    const model_fileName = `models/${params.bankId}_${file.filename
+      .replaceAll(" ", "")
+      .split(".")[0]
+      .replaceAll("(", "")
+      .replaceAll(")", "")}AiModelFile${index + 1}`;
+
+    const res = await deleteFile({
+      fileId: file.id,
+      model_name,
+      model_fileName,
+    });
+    if (res) {
+      toast({
+        title: "File Deleted",
+        description:
+          "Your File and Ai Training Context  has been deleted Successfully.",
+      });
+      setIsLoading(false);
+    }
+  };
 
   const filesForm = useForm<z.infer<typeof FileUploadFormSchema>>({
     mode: "onChange",
@@ -202,11 +247,17 @@ const Page = ({
           <div className="flex text-xl font-bold ">Uploaded Files</div>
 
           {files.map((file, index) => (
-            <div key={index} className="py-4">
+            <div key={index} className="py-6">
               <hr />
-              <div className="flex ">
+              <div className="flex mt-2">
                 <div className="flex flex-1">{file.filename}</div>
                 <div className="flex">{file.UploadedAt}</div>
+                <div
+                  className="flex mx-2 cursor-pointer text-blue-800"
+                  onClick={() => documentDelete({ file, index })}
+                >
+                  <Trash />
+                </div>
               </div>
             </div>
           ))}
