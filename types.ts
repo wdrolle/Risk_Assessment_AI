@@ -17,6 +17,18 @@ export type code = {
   lowRisk: string;
   moderateRisk: string;
   highRisk: string;
+  subcodes?: [subcode];
+};
+
+export type subcode = {
+  subcode: string;
+  category: string;
+  strong: string;
+  adequate: string;
+  weak: string;
+  score: number;
+  comments: string;
+  documents: string;
 };
 
 export type codeAnalyses = [assesment];

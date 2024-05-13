@@ -20,7 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { assesment, bank, code, codeAnalyses } from "@/types";
+import { assesment, bank, code, codeAnalyses, subcode } from "@/types";
 import axios from "axios";
 import { ArrowUpDown, Loader2, Router } from "lucide-react";
 import queryString from "query-string";
@@ -113,6 +113,7 @@ const RiskAssementForm = ({
       lowRisk: string;
       moderateRisk: string;
       highRisk: string;
+      subcode?: [subcode];
     }[];
   };
   selectedBankID: string;
@@ -369,16 +370,16 @@ const RiskAssementForm = ({
                       />
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.riskCategory.substring(0,40)}...
+                      {content.riskCategory.substring(0, 40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.lowRisk.substring(0,40)}...
+                      {content.lowRisk.substring(0, 40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.moderateRisk.substring(0,40)}...
+                      {content.moderateRisk.substring(0, 40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.highRisk.substring(0,40)}...
+                      {content.highRisk.substring(0, 40)}...
                     </TableCell>
 
                     <TableCell className="align-top">
@@ -436,7 +437,6 @@ const RiskAssementForm = ({
                       />
                     </TableCell>
                     <TableCell>
-                      
                       <Table className="h-full overflow-scroll">
                         <TableHeader>
                           <TableRow className="bg-black text-white">

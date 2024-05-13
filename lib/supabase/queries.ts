@@ -170,6 +170,9 @@ export const getCodesWithId = async (bankId: string) => {
       where: {
         bankId: bankId,
       },
+      include: {
+        subclasses: true,
+      },
     });
     if (codes) {
       const codeData = codes.map((code, index) => {
@@ -179,6 +182,7 @@ export const getCodesWithId = async (bankId: string) => {
           lowRisk: code.lowRisk,
           moderateRisk: code.moderateRisk,
           highRisk: code.highRisk,
+          subClasses: code.subclasses,
         };
       });
 

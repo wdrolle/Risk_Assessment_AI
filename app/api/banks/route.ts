@@ -15,7 +15,11 @@ export async function GET(req: Request) {
           id: bankId,
         },
         include: {
-          codes: true, // Include associated codes
+          codes: {
+            include: {
+              subclasses: true, // Include associated subclasses for each code
+            },
+          }, // Include associated codes
           codeAnalyses: true, // Include associated code analyses
         },
       });

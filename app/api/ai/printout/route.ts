@@ -24,7 +24,17 @@ export async function POST(req: NextRequest) {
     const data = await res.data;
     const response = data.response;
 
-    fs.writeFileSync(`public/files/${body.bankName.replaceAll(" ","")}_PrintOut.txt`, response);
+    fs.writeFileSync(
+      `public/files/${body.bankName.replaceAll(" ", "")}_PrintOut.txt`,
+      response
+    );
+    const PDFDocument = require("pdfkit");
+    const doc = new PDFDocument();
+    // add your content to the document here, as usual
+    doc.text(response);
+    // get a blob when you're done
+    doc.pipe(fs.createWriteStream(`public/files/${body.bankName.replaceAll(" ", "")}_PrintOut.pdf`));
+    doc.end();
     // console.log(data);
 
     return NextResponse.json({ response });
