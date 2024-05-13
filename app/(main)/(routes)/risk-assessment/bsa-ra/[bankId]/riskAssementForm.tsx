@@ -20,7 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { assesment, bank, code } from "@/types";
+import { assesment, bank, code, codeAnalyses } from "@/types";
 import axios from "axios";
 import { ArrowUpDown, Loader2, Router } from "lucide-react";
 import queryString from "query-string";
@@ -278,6 +278,11 @@ const RiskAssementForm = ({
     setBanksData(response);
     setMessage("Loaded Successfully !!");
     console.log(response);
+    console.log(
+      (response as bank)?.codeAnalyses.filter(
+        (assessment) => assessment.code === "CB"
+      )
+    );
     setIsProcessing(false);
   };
   useEffect(() => {
@@ -305,7 +310,7 @@ const RiskAssementForm = ({
                     <TableHead key={index}>{header}</TableHead>
                   ))}
 
-                  {/* <TableHead className="text-center">Risk SubClasses</TableHead> */}
+                  <TableHead className="text-center">Risk SubClasses</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -364,52 +369,58 @@ const RiskAssementForm = ({
                       />
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.riskCategory}
+                      {content.riskCategory.substring(0,40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.lowRisk}
+                      {content.lowRisk.substring(0,40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.moderateRisk}
+                      {content.moderateRisk.substring(0,40)}...
                     </TableCell>
                     <TableCell className="align-top">
-                      {content.highRisk}
+                      {content.highRisk.substring(0,40)}...
                     </TableCell>
 
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.inherentRiskCategory
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.inherentRiskCategory
                       }
                     </TableCell>
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.inherentRiskScore
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.inherentRiskScore
                       }
                     </TableCell>
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.mitigatingControl
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.mitigatingControl
                       }
                     </TableCell>
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.mitigatingControlScore
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.mitigatingControlScore
                       }
                     </TableCell>
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.residualRiskScore
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.residualRiskScore
                       }
                     </TableCell>
                     <TableCell className="align-top">
                       {
-                        (banksData as bank)?.codeAnalyses[index]
-                          ?.documentUsedForAnalysis
+                        (banksData as bank)?.codeAnalyses.filter(
+                          (assessment) => assessment.code === content.code
+                        )[0]?.documentUsedForAnalysis
                       }
                     </TableCell>
                     <TableCell className="align-top w-[600px]">
@@ -418,9 +429,60 @@ const RiskAssementForm = ({
                         cols={6}
                         className="w-[300px]"
                         value={
-                          (banksData as bank)?.codeAnalyses[index]?.comments
+                          (banksData as bank)?.codeAnalyses.filter(
+                            (assessment) => assessment.code === content.code
+                          )[0]?.comments
                         }
                       />
+                    </TableCell>
+                    <TableCell>
+                      
+                      <Table className="h-full overflow-scroll">
+                        <TableHeader>
+                          <TableRow className="bg-black text-white">
+                            <TableHead>#</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Strong(3)</TableHead>
+                            <TableHead>Adequate(2)</TableHead>
+                            <TableHead>Weak(1)</TableHead>
+                            <TableHead>Score</TableHead>
+                            <TableHead>Comments</TableHead>
+                            <TableHead>Documents</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {/* {banksData.map(
+                            (sub_content, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="align-top">
+                                  {sub_content.code}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.category}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.strong}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.adequate}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.weak}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.score}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.comments}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.documents}
+                                </TableCell>
+                              </TableRow>
+                            )
+                          )} */}
+                        </TableBody>{" "}
+                      </Table>
                     </TableCell>
                   </TableRow>
                 ))}

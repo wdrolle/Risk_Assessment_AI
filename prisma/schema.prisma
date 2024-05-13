@@ -376,8 +376,26 @@ model Code {
   createAt     DateTime  @default(now())
   updatedAt    DateTime? @updatedAt
   bank         Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  subclasses   SubCode[]
 
   @@index([bankId])
+  @@schema("public")
+}
+
+model SubCode {
+  id        String @id @default(uuid()) @map("_id")
+  subcode   String
+  category  String
+  strong    String
+  adequate  String
+  weak      String
+  score     Int
+  comments  String
+  documents String
+  codeId    String
+  code      Code   @relation(fields: [codeId], references: [id], onDelete: Cascade)
+
+  @@index([codeId])
   @@schema("public")
 }
 

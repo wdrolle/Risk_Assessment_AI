@@ -22,6 +22,7 @@ import Loader from "@/components/global/loader";
 import { actionLoginUser } from "@/lib/server-actions/auth-actions";
 
 const LoginPage = () => {
+  const [Loading, setLoading] = useState(false);
   const router = useRouter();
   const [submitError, setSubmitError] = useState("");
 
@@ -38,6 +39,7 @@ const LoginPage = () => {
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (
     formData
   ) => {
+    setLoading(true);
     console.log("Enter");
     const { session } = await actionLoginUser(formData);
     console.log("out");
@@ -45,6 +47,7 @@ const LoginPage = () => {
       form.reset();
       setSubmitError("Error Occured while Logging!!");
     } else {
+      setLoading(false);
       router.replace("/dashboard");
     }
   };
@@ -116,7 +119,7 @@ const LoginPage = () => {
           size="lg"
           disabled={isLoading}
         >
-          {!isLoading ? "Login" : <Loader />}
+          {!isLoading && Loading ? "Login" : <Loader />}
         </Button>
         <span className="self-container">
           Dont have an account?{" "}
