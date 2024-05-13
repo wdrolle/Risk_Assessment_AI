@@ -107,7 +107,7 @@ const page = ({
               href={`/files/${(banksData as bank)?.name?.replaceAll(
                 " ",
                 ""
-              )}_PrintOut.txt`}
+              )}_PrintOut.pdf`}
               locale={false}
               target="_blank"
               rel="noopener noreferrer"
