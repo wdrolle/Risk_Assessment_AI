@@ -36,6 +36,7 @@ model flow_state {
   created_at             DateTime?             @db.Timestamptz(6)
   updated_at             DateTime?             @db.Timestamptz(6)
   authentication_method  String
+  auth_code_issued_at    DateTime?             @db.Timestamptz(6)
 
   @@index([created_at(sort: Desc)])
   @@index([auth_code], map: "idx_auth_code")
@@ -112,6 +113,22 @@ model mfa_factors {
   @@schema("auth")
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model one_time_tokens {
+  id         String              @id @db.Uuid
+  user_id    String              @db.Uuid
+  token_type one_time_token_type
+  token_hash String
+  relates_to String
+  created_at DateTime            @default(now()) @db.Timestamp(6)
+  updated_at DateTime            @default(now()) @db.Timestamp(6)
+
+  @@unique([user_id, token_type])
+  @@index([relates_to], map: "one_time_tokens_relates_to_hash_idx", type: Hash)
+  @@index([token_hash], map: "one_time_tokens_token_hash_hash_idx", type: Hash)
+  @@schema("auth")
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model refresh_tokens {
   instance_id String?   @db.Uuid
@@ -143,6 +160,7 @@ model saml_providers {
   attribute_mapping Json?
   created_at        DateTime? @db.Timestamptz(6)
   updated_at        DateTime? @db.Timestamptz(6)
+  name_id_format    String?
 
   @@index([sso_provider_id])
   @@schema("auth")
@@ -222,43 +240,13 @@ model sso_providers {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
-
-enum aal_level {
-  aal1
-  aal2
-  aal3
-
-  @@schema("auth")
-}
-
-enum code_challenge_method {
-  s256
-  plain
-
-  @@schema("auth")
-}
-
-enum factor_status {
-  unverified
-  verified
-
-  @@schema("auth")
-}
-
-enum factor_type {
-  totp
-  webauthn
-
-  @@schema("auth")
-}
-
 model auth_users {
   instance_id                 String?   @db.Uuid
   id                          String    @id @db.Uuid
   aud                         String?   @db.VarChar(255)
   role                        String?   @db.VarChar(255)
-  email                       String    @db.VarChar(255)
-  encrypted_password          String    @db.VarChar(255)
+  email                       String?   @db.VarChar(255)
+  encrypted_password          String?   @db.VarChar(255)
   email_confirmed_at          DateTime? @db.Timestamptz(6)
   invited_at                  DateTime? @db.Timestamptz(6)
   confirmation_token          String?   @db.VarChar(255)
@@ -295,12 +283,44 @@ model auth_users {
   @@schema("auth")
 }
 
-enum Role {
-  ADMIN
-  ANALYSER
-  DEFAULT
+enum aal_level {
+  aal1
+  aal2
+  aal3
 
-  @@schema("public")
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+
+  @@schema("auth")
+}
+
+enum one_time_token_type {
+  confirmation_token
+  reauthentication_token
+  recovery_token
+  email_change_token_new
+  email_change_token_current
+  phone_change_token
+
+  @@schema("auth")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -328,7 +348,7 @@ model Bank {
   address          String             @unique
   createdAt        DateTime           @default(now())
   updatedAt        DateTime?          @updatedAt
-  status           String?            @default("basic") // basic : Only name and address is uploaded
+  status           String?            @default("basic")
   codes            Code[]
   codeAnalyses     CodeAnalysis[]
   users            public_users[]
@@ -416,5 +436,13 @@ model CodeAnalysis {
   bank                    Bank      @relation(fields: [bankId], references: [id], onDelete: Cascade)
 
   @@index([bankId])
+  @@schema("public")
+}
+
+enum Role {
+  ADMIN
+  ANALYSER
+  DEFAULT
+
   @@schema("public")
 }

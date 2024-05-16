@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/global/loader";
 import { actionLoginUser } from "@/lib/server-actions/auth-actions";
+import { Loader2 } from "lucide-react";
 
 const LoginPage = () => {
   const [Loading, setLoading] = useState(false);
@@ -51,6 +52,10 @@ const LoginPage = () => {
       router.replace("/dashboard");
     }
   };
+
+  useEffect(() => {
+    console.log(Loading, isLoading);
+  }, [Loading, isLoading]);
 
   return (
     <Form {...form}>
@@ -119,7 +124,14 @@ const LoginPage = () => {
           size="lg"
           disabled={isLoading}
         >
-          {!isLoading && Loading ? "Login" : <Loader />}
+          {(!isLoading && !Loading) ? (
+            "Login"
+          ) : (
+            <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+              <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+              <p className="text-xs text-white  ">Loading...</p>
+            </div>
+          )}
         </Button>
         <span className="self-container">
           Dont have an account?{" "}
