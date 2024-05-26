@@ -25,7 +25,6 @@ import { MailCheck } from "lucide-react";
 import { FormSchema } from "@/lib/types";
 import { actionSignUpUser } from "@/lib/server-actions/auth-actions";
 
-
 const SignUpFormSchema = z
   .object({
     email: z.string().describe("Email").email({ message: "Invalid Email" }),
@@ -78,12 +77,14 @@ const Signup = () => {
       router.push(`/signup?error_description=${res.error}`);
       form.reset();
       return;
+    } else {
+      router.replace("/");
     }
     setConfirmation(true);
   };
 
   return (
-    <Form {...form} >
+    <Form {...form}>
       <form
         onChange={() => {
           if (submitError) setSubmitError("");

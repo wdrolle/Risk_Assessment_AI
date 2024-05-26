@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import SideBar from "./SideBar";
 import { ModeToggle } from "./mode-toggle";
 import Notifications from "@/components/notifications";
@@ -9,13 +10,38 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Bank } from "@prisma/client";
 import { getBankWithId } from "@/lib/supabase/queries";
+import { Loader2 } from "lucide-react";
 
-const NavBar = async ({ bankId }: { bankId: string | undefined }) => {
-  const bank = await getBankWithId(bankId!!);
+const NavBar = ({ bankId }: { bankId: string | undefined }) => {
+  const [bank, setBank] = useState<{
+    id: string;
+    name: string;
+    address: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+    status: string | null;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const bankDetail = async () => {
+      if (bankId) {
+        const bankData = await getBankWithId(bankId!!);
+        setBank(bankData);
+      }
+
+      setIsLoading(false);
+    };
+
+    bankDetail();
+  }, [bankId]);
+
   return (
     <div className="flex w-full  shadow-xl border-b-2">
       <div className="flex w-full m-5">
-        {bank?.status == "files_uploaded" && <SideBar bankId={bankId} />}
+        {!isLoading && bank?.status == "files_uploaded" && (
+          <SideBar bankId={bankId} />
+        )}
       </div>
 
       <div className="flex-1  flex m-5 items-center gap-x-1.5">

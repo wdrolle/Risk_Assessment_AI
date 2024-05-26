@@ -1,36 +1,60 @@
+"use client";
 import BankSetup from "@/components/bank-setup/bank-setup";
-import { db } from "@/lib/db";
+import { useSupabaseUser } from "@/components/providers/supabase-user-provider";
 import { getBank } from "@/lib/supabase/queries";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import React from "react";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
-const Page = async () => {
-  cookies().getAll();
-  const supabase = await createServerComponentClient({ cookies });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+const Page = () => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const { state } = useSupabaseUser();
+  const [bank, setBank] = useState<{
+    id: string;
+    name: string;
+    address: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+    status: string | null;
+  } | null>(null);
 
-  const bank = await getBank(user?.email!!);
+  useEffect(() => {
+    const bankDetail = async () => {
+      const bankdata = await getBank(state.user?.email!!);
+      if (bankdata) {
+        setBank(bankdata);
+        if (bankdata.status === "files_uploaded")
+          router.push(`/dashboard/?${bankdata.id}`);
+      }
+      setIsLoading(false);
+    };
+    if (state.user) {
+      bankDetail();
+    }
+  }, [state.user]);
 
-  if (bank) {
-    if (bank.status === "files_uploaded")
-      return redirect(`/dashboard/?${bank.id}`);
+  console.log("user:", state.user);
+  if (isLoading) {
+    return (
+      <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+        <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+        <p className="text-xs text-white  ">&nbsp; Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div
       className="bg-background
-        h-screen
-        w-screen
-        flex
-        flex-col
-        justify-center
-        items-center
-        gap-y-10
-        "
+          h-screen
+          w-screen
+          flex
+          flex-col
+          justify-center
+          items-center
+          gap-y-10
+          "
     >
       <div className="flex flex-col items-center">
         <div className="text-3xl font-bold">OnBoarding</div>

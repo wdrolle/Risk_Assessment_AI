@@ -49,7 +49,7 @@ const LoginPage = () => {
       setSubmitError("Error Occured while Logging!!");
     } else {
       setLoading(false);
-      router.replace("/dashboard");
+      router.replace("/");
     }
   };
 
@@ -129,7 +129,7 @@ const LoginPage = () => {
           ) : (
             <div className="flex text-white flex-1 justify-center items-center h-[300px]">
               <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
-              <p className="text-xs text-white  ">Loading...</p>
+              <p className="text-xs text-white  ">&nbsp; Loading...</p>
             </div>
           )}
         </Button>

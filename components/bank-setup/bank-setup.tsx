@@ -33,6 +33,7 @@ import {
   FormItem,
   FormMessage,
 } from "../ui/form";
+import { codes } from "@/constant/riskAssesmentTableData";
 
 interface BankSetupProps {
   bank?: Bank | null;
@@ -70,6 +71,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
     z.infer<typeof FileUploadFormSchema>
   > = async (formData) => {
     console.log(formData);
+    setUploadingdocument(true);
 
     const filesData = formData.files.map((file) => {
       return {
@@ -87,6 +89,7 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
       });
 
       router.push(`/dashboard/${bank?.id}`);
+      setUploadingdocument(false);
     });
   };
 
@@ -104,8 +107,9 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
         address: value.address,
         updatedAt: new Date(),
       };
+      const codesWithsubcode = codes;
 
-      const { data, error: createError } = await createAndUpdateBank(newBank);
+      const { data, error: createError } = await createAndUpdateBank(newBank,codesWithsubcode);
       if (data) {
         toast({
           title: "Bank Created",
@@ -199,7 +203,14 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
                   variant="ghost"
                   className="border-2 border-black bg-gray-300  hover:text-black w-full"
                 >
-                  {Uploadingdocument ?<Loader2 className="h-7 w-7 text-white  animate-spin my-4" /> : "Upload Files"}
+                  {Uploadingdocument ? (
+                    <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+                      <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+                      <p className="text-xs text-white">&nbsp; Loading...</p>
+                    </div>
+                  ) : (
+                    "Upload Files"
+                  )}
                 </Button>
               </form>
             </Form>
@@ -255,7 +266,13 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
 
               <div className="self-end">
                 <Button disabled={isLoading} type="submit">
-                  {!isLoading ? "Create Bank" : <Loader />}
+                  {!isLoading ? (
+                    "Create Bank"
+                  ) : (
+                    <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+                      <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+                    </div>
+                  )}
                 </Button>
               </div>
             </div>

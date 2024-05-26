@@ -490,9 +490,23 @@ const RiskAssementForm = ({
             </Table>
           </div>
           <div className="flex flex-col items-center">
-            <Button className="w-[100px] bg-blue-700 text-white hover:bg-blue-900 hover:text-white">
-              Submit
-            </Button>
+            {(banksData as bank)?.codes?.length > 0 ? (
+              <Button className="w-[100px] bg-blue-700 text-white hover:bg-blue-900 hover:text-white">
+                Submit
+              </Button>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-y-5  mt-3">
+                <Button
+                  type="button"
+                  onClick={() => router.push("/codes/add-manage-codes")}
+                  className="flex w-[100px] bg-blue-700 text-white hover:bg-blue-900 hover:text-white"
+                >
+                  Add codes
+                </Button>
+
+                <div className="flex">*Add Codes to start analysis</div>
+              </div>
+            )}
           </div>
         </form>
       </Form>

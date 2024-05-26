@@ -8,25 +8,49 @@ import { v4 } from "uuid";
 import { code, codes } from "@/types";
 import fs from "fs";
 import { exec } from "child_process";
+import { toast } from "@/components/ui/use-toast";
 
 export const getBank = async (email: string) => {
   try {
-    const bank = await db.bank.findFirst({
-      where: {
-        users: {
-          some: { email: email },
+    console.log("email here:", email);
+    if (email) {
+      const bank = await db.bank.findFirst({
+        where: {
+          users: {
+            some: { email: email },
+          },
         },
-      },
-    });
+      });
 
-    return bank;
+      return bank;
+    } else {
+      return null;
+    }
   } catch (error) {
     console.log("[ERROR_GET_BANK]", error);
     return null;
   }
 };
 
-export const createAndUpdateBank = async (newbank: Partial<Bank>) => {
+export const createAndUpdateBank = async (
+  newbank: Partial<Bank>,
+  codes: {
+    id?: string;
+    code: string;
+    riskCategory: string;
+    lowRisk: string;
+    moderateRisk: string;
+    highRisk: string;
+    subcodes: {
+      id?: string;
+      subcode: string;
+      category: string;
+      strong: string;
+      adequate: string;
+      weak: string;
+    }[];
+  }[] = []
+) => {
   cookies().getAll();
   console.log("in create");
   const supabase = await createServerActionClient({ cookies });
@@ -36,22 +60,76 @@ export const createAndUpdateBank = async (newbank: Partial<Bank>) => {
   if (!user) redirect("/login");
   try {
     const bankData = await db.bank.upsert({
-      where: {
-        id: newbank.id,
-      },
+      where: { id: newbank.id },
       update: newbank,
       create: {
         id: newbank.id,
-        name: newbank.name ? newbank.name : "",
-        address: newbank.address ? newbank.address : "",
-        status: newbank.status ? newbank.status : "",
+        name: newbank.name || "",
+        address: newbank.address || "",
+        status: newbank.status || "basic",
         users: {
-          connect: {
-            id: user.id,
-          },
+          connect: { id: user.id },
         },
       },
     });
+    toast({
+      title: "Bank Details Uploaded",
+      description: `${newbank.name} has been created successfully.`,
+    });
+
+    for (const codeData of codes) {
+      const code = await db.code.upsert({
+        where: { id: codeData.id ? codeData?.id : "" },
+        update: {
+          code: codeData.code,
+          riskCategory: codeData.riskCategory,
+          lowRisk: codeData.lowRisk,
+          moderateRisk: codeData.moderateRisk,
+          highRisk: codeData.highRisk,
+          bankId: bankData.id,
+        },
+        create: {
+          code: codeData.code,
+          riskCategory: codeData.riskCategory,
+          lowRisk: codeData.lowRisk,
+          moderateRisk: codeData.moderateRisk,
+          highRisk: codeData.highRisk,
+          bankId: bankData.id,
+        },
+      });
+
+      toast({
+        title: "Initialization",
+        description: `Initializing the Bank ${newbank.name}.`,
+      });
+
+      for (const subcodeData of codeData.subcodes) {
+        await db.subCode.upsert({
+          where: { id: subcodeData.id ? subcodeData.id : "" },
+          update: {
+            subcode: subcodeData.subcode,
+            category: subcodeData.category,
+            strong: subcodeData.strong,
+            adequate: subcodeData.adequate,
+            weak: subcodeData.weak,
+            codeId: code.id,
+          },
+          create: {
+            subcode: subcodeData.subcode,
+            category: subcodeData.category,
+            strong: subcodeData.strong,
+            adequate: subcodeData.adequate,
+            weak: subcodeData.weak,
+            codeId: code.id,
+          },
+        });
+      }
+
+      toast({
+        title: "Initialization Complete",
+        description: `Initialization Successfully Complete.`,
+      });
+    }
     return { data: bankData, error: null };
   } catch (error: any) {
     console.log("[CREATE_BANK_ERROR]", error);
@@ -100,13 +178,18 @@ export const uploadBankFiles = async (
 
 export const getBankWithId = async (bankId: string) => {
   try {
-    const bank = await db.bank.findFirst({
-      where: {
-        id: bankId,
-      },
-    });
+    console.log("bankId here:", bankId);
+    if (bankId) {
+      const bank = await db.bank.findFirst({
+        where: {
+          id: bankId,
+        },
+      });
 
-    return bank;
+      return bank;
+    } else {
+      return null;
+    }
   } catch (error) {
     console.log("[ERROR_GET_BANK_WTTH_ID]", error);
     return null;

@@ -3,8 +3,9 @@
 import TrainModel from "@/components/train-model";
 import { getAnalysis } from "@/lib/server-actions/ai-actions";
 import { getBankWithId } from "@/lib/supabase/queries";
-import { redirect } from "next/navigation";
-import React, { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { redirect, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 const Page = ({
   params,
@@ -13,10 +14,14 @@ const Page = ({
     bankId: string;
   };
 }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
   useEffect(() => {
     const fetchBankStatus = async () => {
       const bank = await getBankWithId(params.bankId);
-      if (bank?.status !== "files_uploaded") return redirect(`/onboarding`);
+      console.log(bank?.status);
+      if (bank?.status !== "files_uploaded") return router.push(`/onboarding`);
+      setIsLoading(false);
       // await getAnalysis(params.bankId, {
       //   code: "NRA",
       //   riskCategory: "NRA Customers",
@@ -30,6 +35,13 @@ const Page = ({
     fetchBankStatus();
   }, []);
 
+  if (isLoading)
+    return (
+      <div className="flex text-white flex-1 justify-center items-center h-[300px]">
+        <Loader2 className="h-7 w-7 text-white  animate-spin my-4" />
+        <p className="text-xs text-white  ">&nbsp; Loading...</p>
+      </div>
+    );
   return <TrainModel />;
 };
 

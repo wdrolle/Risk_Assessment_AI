@@ -323,6 +323,8 @@ enum one_time_token_type {
   @@schema("auth")
 }
 
+
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model public_users {
   id              String    @id @db.Uuid
@@ -409,9 +411,9 @@ model SubCode {
   strong    String
   adequate  String
   weak      String
-  score     Int
-  comments  String
-  documents String
+  score     Int    @default(0)
+  comments  String @default("")
+  documents String @default("")
   codeId    String
   code      Code   @relation(fields: [codeId], references: [id], onDelete: Cascade)
 
