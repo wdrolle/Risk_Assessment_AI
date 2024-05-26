@@ -20,7 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { assesment, bank, code, codeAnalyses, subcode } from "@/types";
+import { assesment, bank, code, codeAnalyses, codes, subcode } from "@/types";
 import axios from "axios";
 import { ArrowUpDown, Loader2, Router } from "lucide-react";
 import queryString from "query-string";
@@ -227,45 +227,7 @@ const RiskAssementForm = ({
         });
       });
     }
-    // if (serverUrl) {
-    //   setMessage("Assessing your data...");
-    //   await axios
-    //     .post(serverUrl, data)
-    //     .then((response) => {
-    //       console.log(response.data);
-
-    //       if (bankId) {
-    //         const analysisDataArray = response.data.map(
-    //           (entry: {
-    //             code: string;
-    //             comments: string;
-    //             context: string;
-    //             documentName: string;
-    //             risk: string;
-    //             riskRationale: string;
-    //             score: number;
-    //           }) => ({ ...entry, bankId })
-    //         );
-    //         console.log(analysisDataArray);
-
-    //         setMessage("Saving data to database...");
-    //         analysisDataArray.forEach(async (analysisData: assesment) => {
-    //           const url = queryString.stringifyUrl({
-    //             url: `/api/addCodeAnalysisToMongoDB/`,
-    //           });
-    //           const response = await axios.post(url, analysisData);
-
-    //           console.log("server response ", response);
-    //           setMessage("Analysis is done Successfully!!");
-    //         });
-    //       }
-
-    //       setIsProcessing(false);
-    //     })
-    //     .catch((error) => {
-    //       console.error(error); // Handle errors
-    //     });
-    // }
+    
   };
 
   const getBankData = async () => {
@@ -276,14 +238,11 @@ const RiskAssementForm = ({
       console.log(error);
     });
 
+    console.log(response);
     setBanksData(response);
     setMessage("Loaded Successfully !!");
-    console.log(response);
-    console.log(
-      (response as bank)?.codeAnalyses.filter(
-        (assessment) => assessment.code === "CB"
-      )
-    );
+    
+    
     setIsProcessing(false);
   };
   useEffect(() => {
@@ -451,37 +410,35 @@ const RiskAssementForm = ({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {/* {banksData.map(
-                            (sub_content, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="align-top">
-                                  {sub_content.code}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.category}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.strong}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.adequate}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.weak}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.score}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.comments}
-                                </TableCell>
-                                <TableCell className="align-top">
-                                  {sub_content.documents}
-                                </TableCell>
-                              </TableRow>
-                            )
-                          )} */}
-                        </TableBody>{" "}
+                          {content.subclasses?.map((subcode, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="align-top">
+                                {subcode.subcode}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.category}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.strong}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.adequate}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.weak}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.score}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.comments}
+                              </TableCell>
+                              <TableCell className="align-top">
+                                {subcode.documents}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
                       </Table>
                     </TableCell>
                   </TableRow>

@@ -17,7 +17,7 @@ export type code = {
   lowRisk: string;
   moderateRisk: string;
   highRisk: string;
-  subcodes?: [subcode];
+  subclasses?: [subcode];
 };
 
 export type subcode = {
