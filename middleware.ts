@@ -33,7 +33,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (["/login", "/signup"].includes(req.nextUrl.pathname)) {
-    console.log("in login");
+    
     if (session) {
       return NextResponse.redirect(new URL("/onboarding", req.url));
     }

@@ -52,7 +52,6 @@ export const createAndUpdateBank = async (
   }[] = []
 ) => {
   cookies().getAll();
-  console.log("in create");
   const supabase = await createServerActionClient({ cookies });
   const {
     data: { user },
@@ -72,10 +71,10 @@ export const createAndUpdateBank = async (
         },
       },
     });
-    toast({
-      title: "Bank Details Uploaded",
-      description: `${newbank.name} has been created successfully.`,
-    });
+    // toast({
+    //   title: "Bank Details Uploaded",
+    //   description: `${newbank.name} has been created successfully.`,
+    // });
 
     for (const codeData of codes) {
       const code = await db.code.upsert({
@@ -98,10 +97,10 @@ export const createAndUpdateBank = async (
         },
       });
 
-      toast({
-        title: "Initialization",
-        description: `Initializing the Bank ${newbank.name}.`,
-      });
+      // toast({
+      //   title: "Initialization",
+      //   description: `Initializing the Bank ${newbank.name}.`,
+      // });
 
       for (const subcodeData of codeData.subcodes) {
         await db.subCode.upsert({
@@ -125,10 +124,7 @@ export const createAndUpdateBank = async (
         });
       }
 
-      toast({
-        title: "Initialization Complete",
-        description: `Initialization Successfully Complete.`,
-      });
+      
     }
     return { data: bankData, error: null };
   } catch (error: any) {

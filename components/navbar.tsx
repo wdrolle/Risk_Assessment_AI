@@ -13,35 +13,14 @@ import { getBankWithId } from "@/lib/supabase/queries";
 import { Loader2 } from "lucide-react";
 
 const NavBar = ({ bankId }: { bankId: string | undefined }) => {
-  const [bank, setBank] = useState<{
-    id: string;
-    name: string;
-    address: string;
-    createdAt: Date;
-    updatedAt: Date | null;
-    status: string | null;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const bankDetail = async () => {
-      if (bankId) {
-        const bankData = await getBankWithId(bankId!!);
-        setBank(bankData);
-      }
-
-      setIsLoading(false);
-    };
-
-    bankDetail();
-  }, [bankId]);
+ 
 
   return (
     <div className="flex w-full  shadow-xl border-b-2">
       <div className="flex w-full m-5">
-        {!isLoading && bank?.status == "files_uploaded" && (
+       
           <SideBar bankId={bankId} />
-        )}
+       
       </div>
 
       <div className="flex-1  flex m-5 items-center gap-x-1.5">

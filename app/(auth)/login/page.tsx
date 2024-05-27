@@ -18,7 +18,6 @@ import Image from "next/image";
 import Logo from "../../../assets/images/logo.png";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/global/loader";
 import { actionLoginUser } from "@/lib/server-actions/auth-actions";
 import { Loader2 } from "lucide-react";
 
@@ -48,9 +47,9 @@ const LoginPage = () => {
       form.reset();
       setSubmitError("Error Occured while Logging!!");
     } else {
-      setLoading(false);
       router.replace("/");
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -124,7 +123,7 @@ const LoginPage = () => {
           size="lg"
           disabled={isLoading}
         >
-          {(!isLoading && !Loading) ? (
+          {!isLoading && !Loading ? (
             "Login"
           ) : (
             <div className="flex text-white flex-1 justify-center items-center h-[300px]">

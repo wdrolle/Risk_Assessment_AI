@@ -109,11 +109,18 @@ const BankSetup: React.FC<BankSetupProps> = ({ bank }) => {
       };
       const codesWithsubcode = codes;
 
-      const { data, error: createError } = await createAndUpdateBank(newBank,codesWithsubcode);
+      toast({
+        title: "Creating Bank",
+        description: `${newBank.name} has being created. Initialization of codes may take a min or so .`,
+      });
+      const { data, error: createError } = await createAndUpdateBank(
+        newBank,
+        codesWithsubcode
+      );
       if (data) {
         toast({
-          title: "Bank Created",
-          description: `${newBank.name} has been created successfully.`,
+          title: "Initialization Complete",
+          description: `Initialization Successfully Complete.`,
         });
 
         router.replace(`/dashboard/${data.id}`);

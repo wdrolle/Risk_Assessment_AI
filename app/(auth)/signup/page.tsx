@@ -70,7 +70,12 @@ const Signup = () => {
   });
 
   const isLoading = form.formState.isSubmitting;
-  const onSubmit = async ({ email, password }: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (
+    data: z.infer<typeof SignUpFormSchema>,
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    const { email, password } = data;
     const res = await actionSignUpUser({ email, password });
     if (res.error) {
       setSubmitError(res.error);
@@ -89,7 +94,7 @@ const Signup = () => {
         onChange={() => {
           if (submitError) setSubmitError("");
         }}
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={(e) => form.handleSubmit((data) => onSubmit(data, e))(e)}
         className="w-full sm:justify-center sm:w-[400px]
         space-y-6 flex
         flex-col
