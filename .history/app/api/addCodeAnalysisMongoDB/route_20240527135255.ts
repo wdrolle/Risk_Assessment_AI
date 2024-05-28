@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       console.log(response);
       return NextResponse.json(response);
     } else {
-      console.error(`Error Analyzing the Clients' Data`);
+      console.error(`Error Anlysing bank data`);
       return new NextResponse("Internal Server Error", { status: 500 });
     }
   } catch (error) {

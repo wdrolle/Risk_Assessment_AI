@@ -53,7 +53,7 @@ const page = ({
   return (
     <div className="m-4 border-2 w-full  flex flex-col p-2">
       <div className="flex w-full border-b-2 p-4">
-        <h1>BSA Risk Assessment</h1>
+        <h1>BSA-RA</h1>
       </div>
 
       <RiskAssementForm

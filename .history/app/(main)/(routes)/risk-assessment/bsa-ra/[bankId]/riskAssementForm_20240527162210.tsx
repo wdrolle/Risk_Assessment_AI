@@ -20,16 +20,25 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { assesment, bank, subcode } from "@/types";
+import { assesment, bank, code, codeAnalyses, codes, subcode } from "@/types";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
+import { ArrowUpDown, Loader2, Router } from "lucide-react";
+import queryString from "query-string";
+import {
+  cbCode,
+  nraCode,
+  table_content,
+  table_header,
+} from "@/constant/riskAssesmentTableData";
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { getBanksData } from "@/lib/bankData";
+import { getCodesWithId } from "@/lib/supabase/queries";
+import { getAnalysis } from "@/lib/server-actions/ai-actions";
 import { addCodeAnalysis } from "@/lib/addCodeAnalysisToDB";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
-import React from "react";
 
 const formSchema = z.object({
   CB: z.boolean().default(false).optional(),
@@ -61,6 +70,37 @@ const formSchema = z.object({
   S: z.boolean().default(false).optional(),
   SAR: z.boolean().default(false).optional(),
 });
+
+const code_names = [
+  "CB",
+  "NRA",
+  "IA",
+  "EM",
+  "MSB",
+  "TP",
+  "IG",
+  "HR",
+  "HRL",
+  "EB",
+  "SV",
+  "CI",
+  "CTR",
+  "LC",
+  "CO",
+  "FC",
+  "FBAR",
+  "P",
+  "PB",
+  "ND",
+  "FT",
+  "CBW",
+  "ACH",
+  "MI",
+  "LOC_C",
+  "NP",
+  "S",
+  "SAR",
+];
 
 const RiskAssementForm = ({
   data,
@@ -122,9 +162,9 @@ const RiskAssementForm = ({
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsProcessing(true);
     setMessage("Parsing Data...");
-    const serverUrl = "http://10.192.11.23:3000/analyze"; // Updated to the GPU server URL
+    const serverUrl = process.env.NEXT_PUBLIC_SERVER_PROCESSING_URL;
 
-    const requestData = {
+    data = {
       codes: [],
     };
 
@@ -133,75 +173,78 @@ const RiskAssementForm = ({
         const filteredCodes = (banksData as bank)?.codes.filter(
           (code) => key === code.code
         );
-        if (filteredCodes && filteredCodes.length > 0) {
-          requestData["codes"].push(filteredCodes[0]);
-        }
+        data["codes"].push(filteredCodes[0]);
       }
     }
 
-    console.log("passed values:", requestData);
+    console.log("passed values:", data);
 
-    for (const code of requestData.codes) {
-      setMessage("📂 Assessing your data");
+    for (const code of data.codes) {
+      setMessage("📂Assessing your data...");
       setTimeout(() => {
-        setMessage("🧠 Analyzing your data");
+        setMessage("🧠Analysing...");
       }, 30000);
 
       setTimeout(() => {
-        setMessage("⌛ Verifying the analysis");
+        setMessage("⌛ReChecking the Analysis...");
       }, 70000);
-
-      try {
-        const response = await axios.post(serverUrl, { bankId, code });
-        const resData = response.data;
-
-        setMessage(`✅ ${code.code} code Analysis Complete`);
+      getAnalysis(bankId, code).then((res) => {
+        console.log(res);
+        setMessage(`✅${code.code} code Analysis Complete`);
         const assessment: assesment = {
           code: code.code,
-          comments: resData.reasoning || "",
-          documentUsedForAnalysis: resData.documentUsedForAnalysis || "",
-          inherentRiskCategory: resData.inherentRiskCategory || "",
-          inherentRiskScore: parseInt(resData.inherentRiskScore) || 0,
-          mitigatingControl: resData.mitigatingControl || "",
-          mitigatingControlScore: parseInt(resData.mitigatingControlScore) || 0,
-          residualRiskCategory: resData.residualRiskCategory || "",
-          residualRiskScore: parseInt(resData.residualRiskScore) || 0,
+          comments: res.reasoning ? res.reasoning : "",
+          documentUsedForAnalysis: res.documentUsedForAnalysis
+            ? res.documentUsedForAnalysis
+            : "",
+          inherentRiskCategory: res.inherentRiskCategory
+            ? res.inherentRiskCategory
+            : "",
+          inherentRiskScore: res.inherentRiskScore
+            ? parseInt(res.inherentRiskScore)
+            : 0,
+          mitigatingControl: res.mitigatingControl ? res.mitigatingControl : "",
+          mitigatingControlScore: res.mitigatingControlScore
+            ? parseInt(res.mitigatingControlScore)
+            : 0,
+          residualRiskCategory: res.residualRiskCategory
+            ? res.residualRiskCategory
+            : "",
+          residualRiskScore: res.residualRiskScore
+            ? parseInt(res.residualRiskScore)
+            : 0,
           bankId: bankId,
         };
-
-        await addCodeAnalysis(assessment);
-        setMessage("Analysis Saved ☑️...");
-        toast({
-          title: "Uploaded Code Analysis",
-          description: `${code.code} Code Analysis Successfully Done.`,
+        addCodeAnalysis(assessment).then((res) => {
+          setMessage("Analysis Saved ☑️...");
+          toast({
+            title: "Uploaded Code Analysis",
+            description: `${code.code} Code Analysis Successfully Done.`,
+          });
+          setIsProcessing(false);
+          getBankData();
+          router.refresh();
         });
-        setIsProcessing(false);
-        await getBankData();
-        router.refresh();
-      } catch (error) {
-        console.error("Error during analysis:", error);
-        setMessage("Error during analysis");
-        setIsProcessing(false);
-      }
+      });
     }
+    
   };
 
   const getBankData = async () => {
     setIsProcessing(true);
     setMessage("Loading Banks data...");
 
-    try {
-      const response = await getBanksData(bankId);
-      setBanksData(response);
-      setMessage("Loaded Successfully !!");
-    } catch (error) {
-      console.error("Error loading bank data:", error);
-      setMessage("Error loading bank data");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    const response = await getBanksData(bankId).catch((error) => {
+      console.log(error);
+    });
 
+    console.log(response);
+    setBanksData(response);
+    setMessage("Loaded Successfully !!");
+    
+    
+    setIsProcessing(false);
+  };
   useEffect(() => {
     if (bankId) {
       getBankData();
@@ -209,7 +252,7 @@ const RiskAssementForm = ({
   }, [bankId]);
 
   return (
-    <div className="relative w-full overflow-auto">
+    <div>
       {(isLoading || isProcessing) && (
         <div className="z-10 fixed top-1/2 left-1/2 transform h-full w-full -translate-x-1/2 bg-opacity-80 bg-black text-2xl font-semibold -translate-y-1/2 flex items-center justify-center">
           <Loader2 className="h-[50px] w-[50px] text-white animate-spin mr-2" />
@@ -233,7 +276,7 @@ const RiskAssementForm = ({
               </TableHeader>
               <TableBody>
                 {(banksData as bank)?.codes?.map((content, index) => {
-                  const showMitigatingControls = form.watch(content.code as keyof typeof formSchema._type);
+                  const showMitigatingControls = form.watch(content.code);
                   const analysis = (banksData as bank)?.codeAnalyses.find(
                     (assessment) => assessment.code === content.code
                   );
@@ -262,12 +305,24 @@ const RiskAssementForm = ({
                             )}
                           />
                         </TableCell>
-                        <TableCell className="align-top">{content.riskCategory}</TableCell>
-                        <TableCell className="align-top">{content.lowRisk}</TableCell>
-                        <TableCell className="align-top">{content.moderateRisk}</TableCell>
-                        <TableCell className="align-top">{content.highRisk}</TableCell>
-                        <TableCell className="align-top">{analysis?.inherentRiskCategory}</TableCell>
-                        <TableCell className="align-top">{analysis?.inherentRiskScore}</TableCell>
+                        <TableCell className="align-top">
+                          {content.riskCategory.substring(0, 40)}...
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {content.lowRisk.substring(0, 40)}...
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {content.moderateRisk.substring(0, 40)}...
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {content.highRisk.substring(0, 40)}...
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {analysis?.inherentRiskCategory}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {analysis?.inherentRiskScore}
+                        </TableCell>
                       </TableRow>
                       {showMitigatingControls && (
                         <TableRow className="border-b-2">
@@ -330,6 +385,54 @@ const RiskAssementForm = ({
       </Form>
     </div>
   );
+  
 };
-
 export default RiskAssementForm;
+
+/* <Table className="h-full overflow-scroll">
+                        <TableHeader>
+                          <TableRow className="bg-black text-white">
+                            <TableHead>#</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Strong(3)</TableHead>
+                            <TableHead>Adequate(2)</TableHead>
+                            <TableHead>Weak(1)</TableHead>
+                            <TableHead>Score</TableHead>
+                            <TableHead>Comments</TableHead>
+                            <TableHead>Documents</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {content.sub_category_content.map(
+                            (sub_content, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="align-top">
+                                  {sub_content.code}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.category}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.strong}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.adequate}
+                                </TableCell>
+                                <TableCell className="align-top">
+                                  {sub_content.weak}
+                                </TableCell>
+                                <TableCell className="align-top">
+//                                   {/* {sub_content.score} */
+// }
+//           </TableCell>
+//           <TableCell className="align-top">
+//             {/* {sub_content.comments} */}
+//           </TableCell>
+//           <TableCell className="align-top">
+//             {/* {sub_content.documents} */}
+//           </TableCell>
+//         </TableRow>
+//       )
+//     )}
+//   </TableBody>
+// </Table> */}

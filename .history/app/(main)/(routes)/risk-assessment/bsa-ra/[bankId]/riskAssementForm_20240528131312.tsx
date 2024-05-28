@@ -118,57 +118,81 @@ const RiskAssementForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  type CodeType = "CB" | "NRA" | "IA" | "EM" | "MSB" | "TP" | "IG" | "HR" | "HRL" | "EB" | "SV" | "CI" | "CTR" | "LC" | "CO" | "FC" | "FBAR" | "P" | "PB" | "ND" | "FT" | "CBW" | "ACH" | "MI" | "LOC_C" | "NP" | "S" | "SAR";
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsProcessing(true);
     setMessage("Parsing Data...");
     const serverUrl = "http://10.192.11.23:3000/analyze"; // Updated to the GPU server URL
-
+  
     const requestData = {
+      bankId: bankId,
       codes: [],
     };
-
+  
     for (const [key, value] of Object.entries(values)) {
       if (value) {
         const filteredCodes = (banksData as bank)?.codes.filter(
           (code) => key === code.code
         );
-        if (filteredCodes && filteredCodes.length > 0) {
-          requestData["codes"].push(filteredCodes[0]);
-        }
+        requestData.codes.push({
+          ...filteredCodes[0],
+          comments: "", // Add any default or necessary value for comments
+          documentUsedForAnalysis: "", // Add any default or necessary value
+          inherentRiskCategory: "", // Add any default or necessary value
+          inherentRiskScore: 0, // Add any default or necessary value
+          mitigatingControl: "", // Add any default or necessary value
+          mitigatingControlScore: 0, // Add any default or necessary value
+          residualRiskCategory: "", // Add any default or necessary value
+          residualRiskScore: 0, // Add any default or necessary value
+        });
       }
     }
-
-    console.log("passed values:", requestData);
-
+  
+    console.log("Passed values:", requestData);
+  
     for (const code of requestData.codes) {
       setMessage("📂 Assessing your data");
       setTimeout(() => {
         setMessage("🧠 Analyzing your data");
       }, 30000);
-
+  
       setTimeout(() => {
         setMessage("⌛ Verifying the analysis");
       }, 70000);
-
+  
       try {
         const response = await axios.post(serverUrl, { bankId, code });
-        const resData = response.data;
-
-        setMessage(`✅ ${code.code} code Analysis Complete`);
+        console.log(response.data);
+        setMessage(`✅${code.code} code Analysis Complete`);
+  
         const assessment: assesment = {
           code: code.code,
-          comments: resData.reasoning || "",
-          documentUsedForAnalysis: resData.documentUsedForAnalysis || "",
-          inherentRiskCategory: resData.inherentRiskCategory || "",
-          inherentRiskScore: parseInt(resData.inherentRiskScore) || 0,
-          mitigatingControl: resData.mitigatingControl || "",
-          mitigatingControlScore: parseInt(resData.mitigatingControlScore) || 0,
-          residualRiskCategory: resData.residualRiskCategory || "",
-          residualRiskScore: parseInt(resData.residualRiskScore) || 0,
+          comments: response.data.reasoning ? response.data.reasoning : "",
+          documentUsedForAnalysis: response.data.documentUsedForAnalysis
+            ? response.data.documentUsedForAnalysis
+            : "",
+          inherentRiskCategory: response.data.inherentRiskCategory
+            ? response.data.inherentRiskCategory
+            : "",
+          inherentRiskScore: response.data.inherentRiskScore
+            ? parseInt(response.data.inherentRiskScore)
+            : 0,
+          mitigatingControl: response.data.mitigatingControl
+            ? response.data.mitigatingControl
+            : "",
+          mitigatingControlScore: response.data.mitigatingControlScore
+            ? parseInt(response.data.mitigatingControlScore)
+            : 0,
+          residualRiskCategory: response.data.residualRiskCategory
+            ? response.data.residualRiskCategory
+            : "",
+          residualRiskScore: response.data.residualRiskScore
+            ? parseInt(response.data.residualRiskScore)
+            : 0,
           bankId: bankId,
         };
-
+  
         await addCodeAnalysis(assessment);
         setMessage("Analysis Saved ☑️...");
         toast({
@@ -180,26 +204,26 @@ const RiskAssementForm = ({
         router.refresh();
       } catch (error) {
         console.error("Error during analysis:", error);
-        setMessage("Error during analysis");
+        setMessage("Error during analysis. Please try again.");
         setIsProcessing(false);
       }
     }
   };
+  
 
   const getBankData = async () => {
     setIsProcessing(true);
     setMessage("Loading Banks data...");
 
-    try {
-      const response = await getBanksData(bankId);
-      setBanksData(response);
-      setMessage("Loaded Successfully !!");
-    } catch (error) {
-      console.error("Error loading bank data:", error);
-      setMessage("Error loading bank data");
-    } finally {
-      setIsProcessing(false);
-    }
+    const response = await getBanksData(bankId).catch((error) => {
+      console.log(error);
+    });
+
+    console.log(response);
+    setBanksData(response);
+    setMessage("Loaded Successfully !!");
+
+    setIsProcessing(false);
   };
 
   useEffect(() => {
@@ -209,7 +233,7 @@ const RiskAssementForm = ({
   }, [bankId]);
 
   return (
-    <div className="relative w-full overflow-auto">
+    <div>
       {(isLoading || isProcessing) && (
         <div className="z-10 fixed top-1/2 left-1/2 transform h-full w-full -translate-x-1/2 bg-opacity-80 bg-black text-2xl font-semibold -translate-y-1/2 flex items-center justify-center">
           <Loader2 className="h-[50px] w-[50px] text-white animate-spin mr-2" />
@@ -233,7 +257,7 @@ const RiskAssementForm = ({
               </TableHeader>
               <TableBody>
                 {(banksData as bank)?.codes?.map((content, index) => {
-                  const showMitigatingControls = form.watch(content.code as keyof typeof formSchema._type);
+                  const showMitigatingControls = form.watch(content.code as CodeType);
                   const analysis = (banksData as bank)?.codeAnalyses.find(
                     (assessment) => assessment.code === content.code
                   );
@@ -262,12 +286,24 @@ const RiskAssementForm = ({
                             )}
                           />
                         </TableCell>
-                        <TableCell className="align-top">{content.riskCategory}</TableCell>
-                        <TableCell className="align-top">{content.lowRisk}</TableCell>
-                        <TableCell className="align-top">{content.moderateRisk}</TableCell>
-                        <TableCell className="align-top">{content.highRisk}</TableCell>
-                        <TableCell className="align-top">{analysis?.inherentRiskCategory}</TableCell>
-                        <TableCell className="align-top">{analysis?.inherentRiskScore}</TableCell>
+                        <TableCell className="align-top whitespace-normal break-words">
+                          {content.riskCategory}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-normal break-words">
+                          {content.lowRisk}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-normal break-words">
+                          {content.moderateRisk}
+                        </TableCell>
+                        <TableCell className="align-top whitespace-normal break-words">
+                          {content.highRisk}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {analysis?.inherentRiskCategory}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {analysis?.inherentRiskScore}
+                        </TableCell>
                       </TableRow>
                       {showMitigatingControls && (
                         <TableRow className="border-b-2">
